@@ -1,0 +1,33 @@
+[Unit]
+Description=Reset U-Boot bootcount after successful boot (OTA rollback confirmation)
+Documentation=https://sbabic.github.io/swupdate/
+# Issue #29: the reset is the *opposite* of rollback — it confirms a
+# healthy slot.  Gate it on the same local-fs / pre-network checks as
+# swupdate-bootcheck.service, NOT on the network.  If the network is
+# down, we still want to clear upgrade_available on a healthy local
+# boot, otherwise the firmware-level bootcount keeps ticking and
+# U-Boot rolls back a healthy slot.
+#
+# Issue #57: drop the hardcoded ConditionPathExists= on the binary
+# path.  The bootcount-reset.sh script already resolves `fw_setenv`
+# at runtime via `command -v`; the service's pre-condition should
+# be no stricter than the script's own gate.  If libubootenv ever
+# moves fw_setenv to /opt/ or /usr/local/bin/, the service would
+# silently stop running; the script would log a warning and exit 0
+# but the env would never be cleared.  Trust the script.
+After=local-fs.target swupdate-bootcheck.service
+Before=network-online.target
+# Confirm the slot only after swupdate-bootcheck.service has set
+# confirmed=true in /boot/boot_state.  An unhealthy slot would not
+# reach this point because boot-watchdog.sh would have rolled it
+# back already.
+Wants=swupdate-bootcheck.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/swupdate/bootcount-reset.sh
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target

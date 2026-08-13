@@ -1,0 +1,23 @@
+[Unit]
+Description=Capture kernel ring buffer to the journal
+Documentation=https://www.freedesktop.org/software/systemd/man/systemd-cat.html
+# Issue #56: the previous service wrote to /var/log/dmesg.boot,
+# but Poky's /var/log is volatile (symlink to /var/volatile/log)
+# and the file was lost on every reboot.  Pipe to systemd-cat
+# instead — the journal lives in /var/log/journal/ which is
+# bind-mounted to persistent storage, so `journalctl -t dmesg-boot
+# -b` survives across reboots.
+DefaultDependencies=no
+After=local-fs.target systemd-journald.service
+Before=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# dmesg --color=never strips ANSI escapes; --since=@0 reads the
+# full ring buffer; systemd-cat tags the entry with the syslog
+# identifier "dmesg-boot" so the operator can filter the journal.
+ExecStart=/bin/sh -c 'dmesg --color=never --since=@0 | systemd-cat -t dmesg-boot -p info'
+
+[Install]
+WantedBy=multi-user.target

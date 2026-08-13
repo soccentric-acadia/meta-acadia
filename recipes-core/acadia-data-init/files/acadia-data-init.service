@@ -1,0 +1,21 @@
+[Unit]
+Description=Initialise Acadia persistent data directory at /home/acadia
+Documentation=file:///lib/systemd/system/var-lib-acadia.mount
+# p4 is mounted at /home by rpi5-home-init.service (which itself runs
+# only After=local-fs.target, Before=getty.target). Wait for it
+# explicitly so /home/acadia is created *inside* the persistent
+# partition, not on the volatile rootfs.
+DefaultDependencies=no
+After=local-fs.target rpi5-home-init.service
+Wants=rpi5-home-init.service
+Before=var-lib-acadia.mount acadia-client.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/mkdir -p /home/acadia
+ExecStart=/bin/chown acadia:acadia /home/acadia
+ExecStart=/bin/chmod 0750 /home/acadia
+
+[Install]
+WantedBy=multi-user.target

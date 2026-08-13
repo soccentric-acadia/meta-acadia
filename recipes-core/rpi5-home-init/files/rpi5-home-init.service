@@ -1,0 +1,20 @@
+[Unit]
+Description=Initialise /home on first boot (persistent home partition)
+Documentation=file:///usr/lib/rpi5-home-init/rpi5-home-init.sh
+# Must run after /home (p4) is mounted and before the login services start.
+# Issue #109: `local-fs.target` is reached while local filesystems are
+# *being* processed, not when they are *all* mounted.  On a slow p4
+# mount or any timing skew, `findmnt -n -o SOURCE /home` inside the
+# script would return empty.  `RequiresMountsFor=/home` makes
+# systemd block until the p4 mount is actually present.
+After=local-fs.target
+RequiresMountsFor=/home
+Before=getty.target sshd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/rpi5-home-init/rpi5-home-init.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

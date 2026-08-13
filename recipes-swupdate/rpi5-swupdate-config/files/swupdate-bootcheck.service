@@ -1,0 +1,23 @@
+[Unit]
+Description=SWUpdate boot health check — confirm OTA slot or trigger rollback
+Documentation=https://sbabic.github.io/swupdate/
+# C1 fix — DO NOT change this ordering:
+#   * After=local-fs.target  → /boot/boot_state must be readable
+#   * Before=network.target   → confirm health BEFORE any network service
+#     starts. If we waited for network-online.target (as a previous
+#     version of this file did) the device would expose a potentially
+#     broken image to the LAN before the rollback path runs.
+# This service is the source of truth for "boot is healthy" — both
+# bootcount-reset.service (which clears U-Boot env) and any future
+# "is the slot safe to talk to the server?" check must depend on it.
+After=local-fs.target
+Before=network.target network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/swupdate/swupdate-bootcheck.sh
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target
