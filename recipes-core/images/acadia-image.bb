@@ -1,7 +1,7 @@
 SUMMARY = "Acadia OS — production image for Raspberry Pi 5"
 DESCRIPTION = "Full image with A/B OTA, gRPC/Protobuf, Acadia-HAL, \
                Acadia-Client daemon, and hardware interface tooling."
-HOMEPAGE = "https://github.com/SiliconCentric/Acadia-OS"
+HOMEPAGE = "https://github.com/soccentric-acadia/Acadia-OS"
 LICENSE = "MIT"
 
 # Base on core-image-full-cmdline (provides bash, sshd-openssh,
@@ -69,6 +69,54 @@ IMAGE_INSTALL:append = " \
     lshw ethtool devmem2 cpupower watchdog sysstat iotop strace \
     v4l-utils evtest python3-periphery vim \
 "
+
+# ── Camera / Video (feature.txt §7 / task.md Camera-Video) ─────────────────
+# libcamera + libcamera-apps come from meta-raspberrypi's dynamic
+# multimedia-layer (already a bblayer).  libcamera-apps provides the
+# rpicam-* CLI tools (rpicam-hello, rpicam-still, rpicam-vid) for
+# Unicam/ISP bring-up diagnostics.  GStreamer + ffmpeg provide the
+# V4L2/VA stateless-decode pipeline for H.265/HEVC (see
+# LICENSE_FLAGS_ACCEPTED in kas/common.yaml for the HEVC flag).
+IMAGE_INSTALL:append = " \
+    libcamera libcamera-apps \
+    gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad gstreamer1.0-libav \
+    ffmpeg \
+"
+
+# ── Display / DRM-KMS (task.md Display) ─────────────────────────────────────
+# kmscube exercises the KMS/DRM pipeline; libdrm-tests provides modetest
+# for display bring-up diagnostics.  vc4-kms-v3d is pinned per-board
+# (see kas/boards/*.yaml).
+IMAGE_INSTALL:append = " kmscube libdrm-tests"
+
+# ── Audio (task.md Audio) ───────────────────────────────────────────────────
+# alsa-utils provides aplay/arecord/speaker-test for audio-path bring-up.
+IMAGE_INSTALL:append = " alsa-utils"
+
+# ── Sensors / GPS / 1-Wire (task.md GPIO-Sensors-IndustrialIO) ─────────────
+# gpsd + python bindings for location-tagged telemetry; owfs for 1-Wire
+# temperature probes (dtoverlay=w1-gpio is set in kas/common.yaml).
+IMAGE_INSTALL:append = " \
+    gpsd gpsd-conf gps-utils python3-pygps python3-gpsd-py3 \
+    owfs owserver owshell \
+"
+
+# ── Power / Thermal (task.md Power-Thermal) ─────────────────────────────────
+# lm-sensors + fancontrol for the official Pi5 Active Cooler / PoE fan
+# header (dtoverlay=rpi-poe / fan-control service in acadia-services).
+IMAGE_INSTALL:append = " \
+    lmsensors lmsensors-sensors lmsensors-fancontrol lmsensors-config \
+"
+
+# ── Storage / Boot (task.md Storage-Boot) ───────────────────────────────────
+# rpi-eeprom provides rpi-eeprom-update/config/digest so PCIe NVMe can be
+# a first-class boot device (EEPROM boot-order management).
+IMAGE_INSTALL:append = " rpi-eeprom"
+
+# ── Debug / Diagnostics (task.md Debug-Diagnostics) ─────────────────────────
+# openocd for JTAG/SWD bring-up debugging beyond gdbserver.
+IMAGE_INSTALL:append = " openocd"
 
 # Acadia stack
 # NOTE: acadia-client is excluded until the upstream repo exists and SRCREV is

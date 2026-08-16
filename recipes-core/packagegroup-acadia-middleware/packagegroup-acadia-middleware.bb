@@ -5,7 +5,7 @@ DESCRIPTION = "Meta-package pulling in the gRPC/Protobuf middleware stack \
                individual middleware packages so the set stays consistent \
                across every per-industry Acadia image (feature.txt §6: \
                'Middleware package group support')."
-HOMEPAGE = "https://github.com/SiliconCentric/Acadia-OS"
+HOMEPAGE = "https://github.com/soccentric-acadia/Acadia-OS"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 

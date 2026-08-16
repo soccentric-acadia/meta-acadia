@@ -1,0 +1,10 @@
+[Unit]
+Description=Thermal check — warn when SoC temperature exceeds threshold
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/thermal-check.sh
+
+[Install]
+WantedBy=multi-user.target

@@ -1,7 +1,7 @@
 SUMMARY = "Acadia Client daemon — gRPC client for the Acadia IV&V server"
 DESCRIPTION = "C++ daemon that connects to an external Acadia server via gRPC, \
                runs hardware validation tests using Acadia-HAL, and reports results."
-HOMEPAGE = "https://github.com/SiliconCentric/Acadia-Client"
+HOMEPAGE = "https://github.com/soccentric-acadia/Acadia-Client"
 LICENSE = "CLOSED"
 
 # Use SSH transport explicitly.  The previous form
@@ -12,7 +12,7 @@ LICENSE = "CLOSED"
 # but the user=git part is silently ignored, and the URL displayed in
 # fetch logs is misleading.  Use a clean SSH URL (issue #35).
 SRC_URI = " \
-    git://github.com/SiliconCentric/Acadia-Client.git;protocol=ssh;branch=release \
+    git://github.com/soccentric-acadia/Acadia-Client.git;protocol=ssh;branch=release \
     file://acadia-client.service \
     file://0001-fix-grpc-cpp-plugin-cross-compile.patch \
 "

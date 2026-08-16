@@ -1,0 +1,14 @@
+[Unit]
+Description=Write system time to battery-backed RTC on shutdown
+DefaultDependencies=no
+After=systemd-remount-fs.service
+Before=shutdown.target umount.target final.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/rtc-sync.sh write
+TimeoutStartSec=30
+
+[Install]
+WantedBy=shutdown.target

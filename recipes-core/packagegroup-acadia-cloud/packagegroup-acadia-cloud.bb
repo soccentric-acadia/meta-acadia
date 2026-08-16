@@ -6,7 +6,7 @@ DESCRIPTION = "Meta-package for cloud connectivity and telemetry tooling — \
                packagegroup-acadia-cloud to IMAGE_INSTALL for deployments \
                that need cloud/telemetry connectivity (feature.txt §6: \
                'Cloud and telemetry package group support')."
-HOMEPAGE = "https://github.com/SiliconCentric/Acadia-OS"
+HOMEPAGE = "https://github.com/soccentric-acadia/Acadia-OS"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 

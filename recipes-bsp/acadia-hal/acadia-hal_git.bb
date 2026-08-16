@@ -1,6 +1,6 @@
 SUMMARY = "Acadia Hardware Abstraction Layer"
 DESCRIPTION = "HAL library for the Acadia platform, providing hardware abstraction interfaces."
-HOMEPAGE = "https://github.com/SiliconCentric/Acaida-HAL"
+HOMEPAGE = "https://github.com/soccentric-acadia/Acadia-HAL"
 LICENSE = "CLOSED"
 # Upstream is a private repo; no LICENSE file is shipped.  BitBake
 # requires a LIC_FILES_CHKSUM entry (issue #34).  We point at the
@@ -10,7 +10,7 @@ LICENSE = "CLOSED"
 LIC_FILES_CHKSUM = "file://security.md;md5=1606e3c70e7eb33ddfd7fa686c3b5ff0"
 
 SRC_URI = " \
-    git://github.com/SiliconCentric/Acaida-HAL.git;protocol=ssh;user=git;branch=master \
+    git://github.com/soccentric-acadia/Acadia-HAL.git;protocol=ssh;user=git;branch=master \
     file://security.md \
 "
 # Pin the private upstream to avoid AUTOREV parse-time network lookups.

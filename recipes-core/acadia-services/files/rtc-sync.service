@@ -1,0 +1,12 @@
+[Unit]
+Description=Sync system clock from battery-backed RTC on boot
+After=local-fs.target
+Before=systemd-timesyncd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/rtc-sync.sh read
+
+[Install]
+WantedBy=multi-user.target

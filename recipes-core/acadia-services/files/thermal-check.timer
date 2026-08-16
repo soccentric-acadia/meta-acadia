@@ -1,0 +1,10 @@
+[Unit]
+Description=Periodic thermal check timer
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+Unit=thermal-check.service
+
+[Install]
+WantedBy=timers.target

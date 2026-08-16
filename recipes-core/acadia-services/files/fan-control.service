@@ -1,0 +1,10 @@
+[Unit]
+Description=Fan control — thermal-based PWM fan controller (Pi5 Active Cooler / PoE)
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/fan-control.sh
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,8 @@
+# Acadia hardware watchdog preset — enable the `watchdog` daemon.
+#
+# The upstream `watchdog` package ships watchdog.service disabled by
+# default (SYSTEMD_AUTO_ENABLE = "disable").  Acadia enables it so the
+# BCM2712 hardware watchdog (/dev/watchdog) provides a true
+# boot-confirm-or-hardware-reset story alongside the OTA boot-watchdog.sh
+# slot-confirmation logic.
+enable watchdog.service
