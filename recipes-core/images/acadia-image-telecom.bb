@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Telecommunications image (placeholder)"
-DESCRIPTION = "Placeholder Telecommunications image for the Acadia platform."
+SUMMARY = "Acadia Telecommunications image"
+DESCRIPTION = "Acadia production image for telecommunications edge systems with networking, hardware integration, diagnostics, and middleware."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Telecommunications-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-industry"

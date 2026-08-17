@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Test & Measurement image (placeholder)"
-DESCRIPTION = "Placeholder Test & Measurement image for the Acadia platform."
+SUMMARY = "Acadia Test & Measurement image"
+DESCRIPTION = "Acadia production image for test and measurement systems with networking, hardware integration, diagnostics, and middleware."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Test & Measurement-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-industry"

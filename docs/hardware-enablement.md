@@ -194,8 +194,8 @@ kmscube
 
 ## 7. Power / Thermal
 
-- **Fan/thermal control**: `lmsensors` + `lmsensors-fancontrol` +
-  `lmsensors-config` are installed.  `acadia-services` provides a
+- **Fan/thermal control**: `lmsensors` is installed for sensor inspection.
+  `acadia-services` provides a
   `fan-control.service`/`fan-control.timer` that reads the SoC thermal
   zone and sets the PWM fan duty cycle (Pi5 Active Cooler / PoE fan).
 - **PoE HAT**: `dtoverlay=rpi-poe` (kas/common.yaml) enables the PoE+

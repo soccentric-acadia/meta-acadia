@@ -17,6 +17,7 @@ SRC_URI = " \
     file://rtc-sync.service \
     file://rtc-sync-shutdown.service \
     file://watchdog.conf \
+    file://watchdog.service.d-acadia.conf \
     file://80-acadia-watchdog.preset \
 "
 
@@ -54,9 +55,13 @@ do_install() {
     install -m 0755 ${WORKDIR}/rtc-sync.sh \
                     ${D}${sbindir}/rtc-sync.sh
 
-    install -d ${D}${sysconfdir}
+    install -d ${D}${sysconfdir}/acadia
     install -m 0644 ${WORKDIR}/watchdog.conf \
-                    ${D}${sysconfdir}/watchdog.conf
+                    ${D}${sysconfdir}/acadia/watchdog.conf
+
+    install -d ${D}${systemd_system_unitdir}/watchdog.service.d
+    install -m 0644 ${WORKDIR}/watchdog.service.d-acadia.conf \
+                    ${D}${systemd_system_unitdir}/watchdog.service.d/acadia.conf
 
     # Enable the upstream `watchdog` daemon (watchdog.service) via a
     # systemd preset so the BCM2712 hardware watchdog is active.
@@ -90,7 +95,8 @@ FILES:${PN} = " \
     ${sbindir}/thermal-check.sh \
     ${sbindir}/fan-control.sh \
     ${sbindir}/rtc-sync.sh \
-    ${sysconfdir}/watchdog.conf \
+    ${sysconfdir}/acadia/watchdog.conf \
+    ${systemd_system_unitdir}/watchdog.service.d/acadia.conf \
     ${systemd_unitdir}/system-preset/ \
     ${systemd_system_unitdir}/dmesg-capture.service \
     ${systemd_system_unitdir}/disk-usage-check.service \

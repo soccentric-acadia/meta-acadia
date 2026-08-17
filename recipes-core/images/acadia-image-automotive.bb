@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Automotive image (placeholder)"
-DESCRIPTION = "Placeholder Automotive image for the Acadia platform."
+SUMMARY = "Acadia Automotive image"
+DESCRIPTION = "Acadia production image for automotive edge systems with networking, hardware integration, diagnostics, and middleware."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Automotive-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-industry"

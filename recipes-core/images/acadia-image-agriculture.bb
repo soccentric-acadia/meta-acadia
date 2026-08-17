@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Agriculture (AgTech) image (placeholder)"
-DESCRIPTION = "Placeholder Agriculture (AgTech) image for the Acadia platform."
+SUMMARY = "Acadia Agriculture (AgTech) image"
+DESCRIPTION = "Acadia production image for agriculture and AgTech edge systems with networking, hardware integration, diagnostics, and middleware."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Agriculture (AgTech)-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-industry"

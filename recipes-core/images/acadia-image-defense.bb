@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Defense image (placeholder)"
-DESCRIPTION = "Placeholder Defense image for the Acadia platform."
+SUMMARY = "Acadia Defense image"
+DESCRIPTION = "Acadia production image for defense edge systems with networking, hardware integration, diagnostics, and middleware."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Defense-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-industry"

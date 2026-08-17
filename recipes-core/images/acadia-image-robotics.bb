@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Robotics image (placeholder)"
-DESCRIPTION = "Placeholder Robotics image for the Acadia platform."
+SUMMARY = "Acadia Robotics and Hardware Integration image"
+DESCRIPTION = "Acadia production image with the complete platform base and robotics, camera, video, sensor, audio, and hardware integration tooling."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Robotics-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-robotics"

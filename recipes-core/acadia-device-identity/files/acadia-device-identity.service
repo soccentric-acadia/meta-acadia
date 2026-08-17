@@ -1,0 +1,12 @@
+[Unit]
+Description=Persist Acadia device identity
+ConditionPathExists=/sys/firmware/devicetree/base/serial-number
+Before=acadia-client.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/acadia-device-identity
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Networking & Routers image (placeholder)"
-DESCRIPTION = "Placeholder Networking & Routers image for the Acadia platform."
+SUMMARY = "Acadia Networking & Edge image"
+DESCRIPTION = "Acadia production image with the complete platform base and networking, wireless, Bluetooth, cloud, and edge diagnostics."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Networking & Routers-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-networking"

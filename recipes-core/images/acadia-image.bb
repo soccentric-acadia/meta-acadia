@@ -103,11 +103,11 @@ IMAGE_INSTALL:append = " \
 "
 
 # ── Power / Thermal (task.md Power-Thermal) ─────────────────────────────────
-# lm-sensors + fancontrol for the official Pi5 Active Cooler / PoE fan
-# header (dtoverlay=rpi-poe / fan-control service in acadia-services).
-IMAGE_INSTALL:append = " \
-    lmsensors lmsensors-sensors lmsensors-fancontrol lmsensors-config \
-"
+# lm-sensors for sensor inspection. Fan control is provided by the
+# platform-native fan-control service in acadia-services, avoiding a
+# machine-specific fancontrol package split that is not available in the
+# pinned OpenEmbedded layer set.
+IMAGE_INSTALL:append = " lmsensors"
 
 # ── Storage / Boot (task.md Storage-Boot) ───────────────────────────────────
 # rpi-eeprom provides rpi-eeprom-update/config/digest so PCIe NVMe can be
@@ -121,7 +121,7 @@ IMAGE_INSTALL:append = " openocd"
 # Acadia stack
 # NOTE: acadia-client is excluded until the upstream repo exists and SRCREV is
 # pinned. Add it back once available: acadia-client acadia-data-init
-IMAGE_INSTALL:append = " acadia-hal acadia-services"
+IMAGE_INSTALL:append = " acadia-hal acadia-services acadia-device-identity acadia-boot-integrity"
 
 # Target debugging and profiling (feature.txt §6: "Target debugging and
 # profiling support"). tools-debug pulls in gdb/gdbserver/strace; valgrind

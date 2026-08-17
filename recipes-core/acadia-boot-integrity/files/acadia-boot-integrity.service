@@ -1,0 +1,11 @@
+[Unit]
+Description=Acadia boot integrity status
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/acadia-boot-integrity
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

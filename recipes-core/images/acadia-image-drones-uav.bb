@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Drones / UAV image (placeholder)"
-DESCRIPTION = "Placeholder Drones / UAV image for the Acadia platform."
+SUMMARY = "Acadia Drones / UAV image"
+DESCRIPTION = "Acadia production image for drone and UAV edge systems with networking, hardware integration, diagnostics, and middleware."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Drones / UAV-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-industry"

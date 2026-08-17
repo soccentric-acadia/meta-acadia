@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Retail / Point-of-Sale image (placeholder)"
-DESCRIPTION = "Placeholder Retail / Point-of-Sale image for the Acadia platform."
+SUMMARY = "Acadia Retail / Point-of-Sale image"
+DESCRIPTION = "Acadia production image for retail and point-of-sale edge systems with networking, hardware integration, diagnostics, and middleware."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Retail / Point-of-Sale-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-industry"

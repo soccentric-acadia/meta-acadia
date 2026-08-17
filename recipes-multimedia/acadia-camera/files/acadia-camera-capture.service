@@ -1,0 +1,14 @@
+[Unit]
+Description=Acadia camera capture pipeline
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/acadia/camera-capture.conf
+ExecStart=/usr/sbin/acadia-camera-capture
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

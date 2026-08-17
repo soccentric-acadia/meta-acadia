@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Oil & Gas image (placeholder)"
-DESCRIPTION = "Placeholder Oil & Gas image for the Acadia platform."
+SUMMARY = "Acadia Oil & Gas image"
+DESCRIPTION = "Acadia production image for oil and gas edge systems with networking, hardware integration, diagnostics, and middleware."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Oil & Gas-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-industry"

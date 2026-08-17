@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Mining image (placeholder)"
-DESCRIPTION = "Placeholder Mining image for the Acadia platform."
+SUMMARY = "Acadia Mining image"
+DESCRIPTION = "Acadia production image for mining edge systems with networking, hardware integration, diagnostics, and middleware."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Mining-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-industry"

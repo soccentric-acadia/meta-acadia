@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Building Automation / Smart Home image (placeholder)"
-DESCRIPTION = "Placeholder Building Automation / Smart Home image for the Acadia platform."
+SUMMARY = "Acadia Building Automation / Smart Home image"
+DESCRIPTION = "Acadia production image for building automation and smart-home edge systems with networking, hardware integration, diagnostics, and middleware."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Building Automation / Smart Home-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-industry"

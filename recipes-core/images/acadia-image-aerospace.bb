@@ -1,8 +1,7 @@
-SUMMARY = "Acadia Aerospace image (placeholder)"
-DESCRIPTION = "Placeholder Aerospace image for the Acadia platform."
+SUMMARY = "Acadia Aerospace image"
+DESCRIPTION = "Acadia production image for aerospace edge systems with networking, hardware integration, diagnostics, and middleware."
 LICENSE = "MIT"
 
-require recipes-extended/images/core-image-full-cmdline.bb
+require ${THISDIR}/acadia-image.bb
 
-# TODO: add Aerospace-specific packages, features, and configuration
-IMAGE_INSTALL:append = ""
+IMAGE_INSTALL:append = " packagegroup-acadia-industry"
