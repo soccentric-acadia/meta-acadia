@@ -77,8 +77,14 @@ IMAGE_INSTALL:append = " \
 # Unicam/ISP bring-up diagnostics.  GStreamer + ffmpeg provide the
 # V4L2/VA stateless-decode pipeline for H.265/HEVC (see
 # LICENSE_FLAGS_ACCEPTED in kas/common.yaml for the HEVC flag).
+#
+# acadia-camera provides the disabled-by-default GStreamer capture/
+# streaming service (task.md Camera-Video: "v4l2-relayd or equivalent
+# V4L2↔RTSP/GStreamer bridging"). It is safe to ship preinstalled but
+# inert: it only runs when ENABLED=1 is set in
+# /etc/acadia/camera-capture.conf (see recipes-multimedia/acadia-camera).
 IMAGE_INSTALL:append = " \
-    libcamera libcamera-apps \
+    libcamera libcamera-apps acadia-camera \
     gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
     gstreamer1.0-plugins-bad gstreamer1.0-libav \
     ffmpeg \

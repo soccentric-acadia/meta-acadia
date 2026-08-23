@@ -21,8 +21,11 @@ KERNEL_VERSION_SANITY_SKIP = "1"
 # (KBRANCH / SRCREV_machine above), so any *.cfg Kconfig fragment added
 # via SRC_URI is merged into the generated .config automatically —
 # no extra do_configure hook needed. Drop fragments into files/fragments/
-# and list them below; acadia-base.cfg ships empty (documentation only)
-# so it is a safe no-op until a deployment actually needs it.
+# and list them below. acadia-base.cfg currently ships the industrial-bus
+# / sensor / PWM / RTC / hardware-watchdog drivers that close the task.md
+# hardware-enablement checklist (CAN, 1-Wire, PWM, GPIO expander, BME280,
+# PCF8523 RTC, bcm2835-wdt). Append additional CONFIG_* lines there as
+# needed for a deployment.
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI:append = " file://fragments/acadia-base.cfg"
 

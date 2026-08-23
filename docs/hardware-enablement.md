@@ -84,6 +84,11 @@ Verify the link with `lspci -vv`.
 - `GPU_MEM` is raised to `${GPU_MEM_CAMERA}` (256 MB) on the rpi5/cm5
   boards for the camera ISP/Unicam pipeline and hardware decode.
 - `v4l2-ctl` (from `v4l-utils`) is installed for camera bring-up.
+- `acadia-camera` ships a disabled-by-default GStreamer capture/streaming
+  service (`acadia-camera-capture.service`) — the task.md
+  “v4l2-relayd-or-equivalent V4L2↔GStreamer bridging” piece. It only
+  runs when `ENABLED=1` is set in `/etc/acadia/camera-capture.conf`;
+  set `GST_SINK` to a TCP/RTSP sink to stream the feed off-device.
 
 Camera bring-up:
 
