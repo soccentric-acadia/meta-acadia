@@ -98,6 +98,31 @@ rpicam-still -o test.jpg
 v4l2-ctl --list-devices
 ```
 
+### 2.1 V4L2 -> network streaming bridge
+`acadia-camera` (in `packagegroup-acadia-robotics`) ships a disabled-by-
+default systemd service (`acadia-camera-capture.service`) that bridges the
+V4L2 device to a network feed.  Set `MODE=udp` in
+`/etc/acadia/camera-capture.conf` (plus `ENABLED=1`, `STREAM_HOST`,
+`STREAM_PORT`) to send the feed as RTP/JPEG over UDP, and consume it on a
+remote IV&V viewer:
+
+```
+# target: start the streaming bridge
+systemctl enable --now acadia-camera-capture
+
+# remote viewer
+GST_DEV=rtpjpeg
+gst-launch-1.0 udpsrc port=5000 \
+    caps="application/x-rtp,encoding-name=JPEG,payload=26" ! \
+    rtpjpegdepay ! jpegdec ! autovideosink
+```
+
+`MODE=local` keeps the original behaviour of rendering to a local sink
+(`GST_SINK`, e.g. `fakesink`/`autovideosink`).  The pipeline uses only
+`gstreamer1.0-plugins-good` elements (`udpsink`, `jpegenc`, `rtpjpegpay`),
+so no extra license flag or layer is required.  For an RTSP-negotiated
+feed, point a `gst-rtsp-server` host at the same device instead.
+
 ---
 
 ## 3. Storage / Boot

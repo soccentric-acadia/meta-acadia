@@ -1,5 +1,5 @@
-SUMMARY = "Acadia optional camera capture service"
-DESCRIPTION = "A disabled-by-default GStreamer camera capture service for Pi CSI/V4L2 validation and network streaming."
+SUMMARY = "Acadia optional camera capture/stream service"
+DESCRIPTION = "A disabled-by-default GStreamer camera service for Pi CSI/V4L2 validation. Supports local capture (MODE=local) and a V4L2-to-RTP/JPEG UDP streaming bridge (MODE=udp) for IV&V camera-feed pipelines."
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
