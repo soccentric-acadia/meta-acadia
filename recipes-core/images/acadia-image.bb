@@ -46,6 +46,9 @@ IMAGE_INSTALL:append = " \
     rpi5-connectivity iw rfkill bluez5-dev \
 "
 
+# WebConfig on-device configuration UI (meta-webconfig layer, task 26)
+IMAGE_INSTALL:append = " webconfigd webconfig-static webconfig-schemas webconfig-manifest"
+
 # gRPC + Protobuf (NO compiler on device — M5)
 # Provided via packagegroup-acadia-middleware (feature.txt §6: "Middleware
 # package group support") instead of an individual package list.
