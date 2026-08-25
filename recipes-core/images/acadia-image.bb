@@ -124,23 +124,22 @@ IMAGE_INSTALL:append = " lmsensors"
 IMAGE_INSTALL:append = " rpi-eeprom"
 
 # ── Debug / Diagnostics (task.md Debug-Diagnostics) ─────────────────────────
-# openocd for JTAG/SWD bring-up debugging beyond gdbserver.
-IMAGE_INSTALL:append = " openocd"
+# Task 53: debug tooling is gated behind ACADIA_ENABLE_DEBUG (default 0 for
+# production). A production build must not ship these unconditionally.
+# Enable with: ACADIA_ENABLE_DEBUG=1 make image <board>
+ACADIA_ENABLE_DEBUG ?= "0"
+ACADIA_DEBUG_PACKAGES = ""
+ACADIA_DEBUG_PACKAGES:${@'1' if '${ACADIA_ENABLE_DEBUG}' == '1' else '0'} = " openocd gdbserver perf trace-cmd valgrind"
 
 # Acadia stack
 # NOTE: acadia-client is excluded until the upstream repo exists and SRCREV is
 # pinned. Add it back once available: acadia-client acadia-data-init
 IMAGE_INSTALL:append = " acadia-hal acadia-services acadia-device-identity acadia-boot-integrity"
+IMAGE_INSTALL:append = "${ACADIA_DEBUG_PACKAGES}"
 
-# Target debugging and profiling (feature.txt §6: "Target debugging and
-# profiling support"). tools-debug pulls in gdb/gdbserver/strace; valgrind
-# does not support ARMv6 (RPi 1 / Zero / CM1), so it is excluded there.
-IMAGE_FEATURES += "tools-debug"
-IMAGE_INSTALL:append = " gdbserver perf trace-cmd valgrind"
-IMAGE_INSTALL:remove:raspberrypi0 = "valgrind"
-IMAGE_INSTALL:remove:raspberrypi0-wifi = "valgrind"
-IMAGE_INSTALL:remove:raspberrypi = "valgrind"
-IMAGE_INSTALL:remove:raspberrypi-cm = "valgrind"
+# Target debugging and profiling (feature.txt §6). tools-debug pulls in
+# gdb/gdbserver/strace. Gated behind ACADIA_ENABLE_DEBUG for production.
+IMAGE_FEATURES:append:${@'1' if '${ACADIA_ENABLE_DEBUG}' == '1' else '0'} = " tools-debug"
 
 # Ptest package and runner support (feature.txt §6 / §12). DISTRO_FEATURES
 # already has "ptest" appended (kas/common.yaml); this installs the
