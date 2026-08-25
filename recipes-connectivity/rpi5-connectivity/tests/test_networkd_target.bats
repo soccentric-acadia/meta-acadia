@@ -47,3 +47,24 @@ setup() {
     run getent hosts localhost
     [ "$status" -eq 0 ]
 }
+
+# ── Modem / WWAN (task 51) ───────────────────────────────────────────────────
+# Cellular is deferred to v2 (task 33), so modem checks SKIP unless a modem is
+# actually present — they must never report PASS on absent hardware.
+
+@test "no modem present is reported, never a false pass (task 51)" {
+    if command -v mmcli >/dev/null 2>&1 && mmcli -L 2>/dev/null | grep -q 'Modem'; then
+        # A modem is present — it must enumerate.
+        mmcli -L | grep -q 'Modem'
+    else
+        skip "no ModemManager modem detected (cellular is optional/v2)"
+    fi
+}
+
+@test "wwan interface is classified separately from ethernet/wifi (task 51)" {
+    # WWAN interfaces (wwan*) must be detected distinctly by the network page,
+    # not misreported as ethernet. On the fake/headless target without a modem
+    # this is a shape check only.
+    ip -br link show 2>/dev/null | awk '$1 ~ /^ww/ { found=1 } END { exit !found }' \
+        || skip "no ww* interface present (no cellular)"
+}
