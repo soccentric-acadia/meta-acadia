@@ -42,30 +42,62 @@ if [[ "${confirmed:-false}" == "true" ]]; then
     exit 0
 fi
 
-# ── Wait for services to settle (5 second minimum) ───────────────────────────
-# This ensures acadia-client has time to fully initialize before we check it
-sleep 5
-
-# ── Health check ─────────────────────────────────────────────────────────────
+# ── Wait for services to settle (bounded readiness, not a fixed 5s) ────────
+# Task 47: wait up to a bounded window for required services to reach active,
+# rather than a single hardcoded sleep then one-shot check.
 HEALTH_OK=true
+WAIT_MAX=30
+waited=0
+wait_service() {
+    local unit="$1"
+    while ! systemctl is-active --quiet "${unit}" 2>/dev/null; do
+        if [[ "${waited}" -ge "${WAIT_MAX}" ]]; then
+            logger -t swupdate-bootcheck "${unit} not active within ${WAIT_MAX}s"
+            return 1
+        fi
+        sleep 2
+        waited=$((waited + 2))
+    done
+    return 0
+}
 
-# Check acadia-client is actually running (active AND running, not just started)
-if ! systemctl is-active --quiet acadia-client.service 2>/dev/null; then
-    HEALTH_OK=false
-    logger -t swupdate-bootcheck "acadia-client.service not active"
+# Health contract (task 47): the boot is only healthy when the required
+# services that must survive an update are actually up — HAL, webconfigd, and
+# the client — with bounded readiness. Networking and storage are validated
+# separately below.
+for unit in hal.service webconfigd.service acadia-client.service; do
+    if systemctl list-unit-files "${unit}" >/dev/null 2>&1; then
+        if ! wait_service "${unit}"; then
+            HEALTH_OK=false
+            logger -t swupdate-bootcheck "${unit} failed readiness (bounded ${WAIT_MAX}s)"
+        fi
+    fi
+done
+
+# Networking: at least one non-loopback interface must be up once networkd
+# has had a chance (bounded). Required so a healthy update can actually be
+# reached/confirmed.
+if [[ "${HEALTH_OK}" == "true" ]]; then
+    net_ok=false
+    for _ in $(seq 1 15); do
+        if ip -br addr show 2>/dev/null | awk 'NR>1 && $1 != "lo" { if ($3 ~ /inet/) exit 0 } END { exit 1 }'; then
+            net_ok=true
+            break
+        fi
+        sleep 2
+    done
+    [[ "${net_ok}" == "true" ]] || { HEALTH_OK=false; logger -t swupdate-bootcheck "no interface got an address (networking unhealthy)"; }
 fi
 
-# Verify acadia-client has been running for at least 3 seconds (ensures it's
-# actually working, not just starting up)
+# Storage: the root filesystem must be read-write and have free space, else an
+# update/health-check cannot be durable.
 if [[ "${HEALTH_OK}" == "true" ]]; then
-    ACTIVE_MSEC=$(systemctl show --property ActiveEnterTimestamp acadia-client.service 2>/dev/null | cut -d= -f2)
-    CURRENT_MSEC=$(date +%s%N 2>/dev/null || echo "")
-    if [[ -n "${ACTIVE_MSEC}" ]]; then
-        ACTIVE_SECONDS=$(( (CURRENT_MSEC - $(date -d "${ACTIVE_MSEC}" +%s%N 2>/dev/null || echo 0)) / 1000000000 ))
-        if [[ "${ACTIVE_SECONDS}" -lt 3 ]]; then
-            HEALTH_OK=false
-            logger -t swupdate-bootcheck "acadia-client.service running only ${ACTIVE_SECONDS}s"
-        fi
+    if ! mount | grep -q ' / ' && ! findmnt -rn -o OPTIONS / | grep -q rw; then
+        HEALTH_OK=false
+        logger -t swupdate-bootcheck "root filesystem not writable"
+    elif [[ -n "$(df -P / 2>/dev/null | awk 'NR==2 { if ($4+0 < 10240) print "low" }')" ]]; then
+        HEALTH_OK=false
+        logger -t swupdate-bootcheck "root filesystem low on space"
     fi
 fi
 
