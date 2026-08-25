@@ -52,10 +52,14 @@ fi
 echo "[swupdate pre-install] target slot: ${INACTIVE_SLOT} (${INACTIVE_DEV})"
 
 # Backup kernel and DTB so boot-watchdog / bootcheck can restore them on rollback
+# Task 46: atomic copy (write temp, fsync, rename) so a power loss never leaves
+# a truncated .prev file that would fail the rollback restore.
 mount -o remount,rw /boot
 for f in kernel_2712.img bcm2712-rpi-5-b.dtb; do
     if [[ -f "/boot/${f}" ]]; then
-        cp "/boot/${f}" "/boot/${f}.prev"
+        cp "/boot/${f}" "/boot/${f}.prev.tmp"
+        sync -f "/boot/${f}.prev.tmp" 2>/dev/null || sync
+        mv -f "/boot/${f}.prev.tmp" "/boot/${f}.prev"
         echo "[swupdate pre-install] backed up /boot/${f}"
     fi
 done

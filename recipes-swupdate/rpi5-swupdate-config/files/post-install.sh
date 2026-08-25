@@ -21,16 +21,26 @@ fi
 
 mount -o remount,rw /boot
 
-# Backup current cmdline.txt for rollback (boot-watchdog / swupdate-bootcheck)
+# Backup current cmdline.txt for rollback (boot-watchdog / swupdate-bootcheck).
+# Task 46: every boot-file mutation is ATOMIC — write a temp file, fsync it,
+# then rename() over the target so a power loss can never leave a truncated or
+# half-written cmdline.txt / boot_state. The RPi firmware reads these on every
+# boot; a torn write would brick the device where the previous version left a
+# mismatch.
 cp /boot/cmdline.txt /boot/cmdline.txt.prev
 
-# Switch root= to the new slot
-sed -i "s|root=PARTUUID=[a-fA-F0-9-]*|root=PARTUUID=${TARGET_PARTUUID}|" \
-    /boot/cmdline.txt
+# Switch root= to the new slot (write-temp → fsync → rename).
+sed "s|root=PARTUUID=[a-fA-F0-9-]*|root=PARTUUID=${TARGET_PARTUUID}|" \
+    /boot/cmdline.txt > /boot/cmdline.txt.tmp
+sync -f /boot/cmdline.txt.tmp 2>/dev/null || sync
+mv -f /boot/cmdline.txt.tmp /boot/cmdline.txt
 
 # Write boot_state for the watchdog — 3 tries before automatic rollback
+# (also atomic, so a power cut cannot leave a half-written boot_state).
 printf 'slot=%s\ntries_remaining=3\nconfirmed=false\n' "${TARGET_SLOT}" \
-    > /boot/boot_state
+    > /boot/boot_state.tmp
+sync -f /boot/boot_state.tmp 2>/dev/null || sync
+mv -f /boot/boot_state.tmp /boot/boot_state
 
 mount -o remount,ro /boot
 
