@@ -129,7 +129,7 @@ IMAGE_INSTALL:append = " rpi-eeprom"
 # Enable with: ACADIA_ENABLE_DEBUG=1 make image <board>
 ACADIA_ENABLE_DEBUG ?= "0"
 ACADIA_DEBUG_PACKAGES = ""
-ACADIA_DEBUG_PACKAGES:${@'1' if '${ACADIA_ENABLE_DEBUG}' == '1' else '0'} = " openocd gdbserver perf trace-cmd valgrind"
+ACADIA_DEBUG_PACKAGES:append = "${@' openocd gdbserver perf trace-cmd valgrind' if '${ACADIA_ENABLE_DEBUG}' == '1' else ''}"
 
 # Acadia stack
 # NOTE: acadia-client is excluded until the upstream repo exists and SRCREV is
@@ -139,7 +139,7 @@ IMAGE_INSTALL:append = "${ACADIA_DEBUG_PACKAGES}"
 
 # Target debugging and profiling (feature.txt §6). tools-debug pulls in
 # gdb/gdbserver/strace. Gated behind ACADIA_ENABLE_DEBUG for production.
-IMAGE_FEATURES:append:${@'1' if '${ACADIA_ENABLE_DEBUG}' == '1' else '0'} = " tools-debug"
+IMAGE_FEATURES:append = "${@' tools-debug' if '${ACADIA_ENABLE_DEBUG}' == '1' else ''}"
 
 # Ptest package and runner support (feature.txt §6 / §12). DISTRO_FEATURES
 # already has "ptest" appended (kas/common.yaml); this installs the
