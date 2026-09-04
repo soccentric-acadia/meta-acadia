@@ -46,7 +46,8 @@ IMAGE_INSTALL:append = " \
     rpi5-connectivity iw rfkill bluez5-dev \
 "
 
-# WebConfig on-device configuration UI (meta-webconfig layer, task 26)
+# WebConfig application: the recipe fetches and builds Acadia-Configuration,
+# then installs its daemon, UI, schemas, and board manifest.
 IMAGE_INSTALL:append = " webconfigd webconfig-static webconfig-schemas webconfig-manifest"
 
 # gRPC + Protobuf (NO compiler on device — M5)
