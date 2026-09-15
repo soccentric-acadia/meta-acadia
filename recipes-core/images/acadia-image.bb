@@ -50,6 +50,15 @@ IMAGE_INSTALL:append = " \
 # then installs its daemon, UI, schemas, and board manifest.
 IMAGE_INSTALL:append = " webconfigd webconfig-static webconfig-schemas webconfig-manifest"
 
+# Instrumentation: the recipe fetches and builds Acadia-Instrumentation, then
+# installs the istate hub and its nine spokes. Its INSTR_BOARD mapping (and
+# the descriptor set it ships) only covers raspberrypi4-64 and raspberrypi5
+# — every other Acadia MACHINE has no mapping, so this is scoped per-machine
+# rather than added unconditionally (which would fail those boards' builds
+# with "nothing provides instrumentation" via COMPATIBLE_MACHINE).
+IMAGE_INSTALL:append:raspberrypi4-64 = " instrumentation"
+IMAGE_INSTALL:append:raspberrypi5 = " instrumentation"
+
 # gRPC + Protobuf (NO compiler on device — M5)
 # Provided via packagegroup-acadia-middleware (feature.txt §6: "Middleware
 # package group support") instead of an individual package list.
