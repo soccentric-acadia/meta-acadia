@@ -51,6 +51,50 @@ S = "${WORKDIR}/git"
 
 inherit cmake systemd pkgconfig useradd
 
+# catalog/CMakeLists.txt builds "alarmgen" (a codegen tool compiled from this
+# same source tree) and then runs it *during the build* to generate
+# alarms_gen.h -- fine for a native (host) build, broken for cross-compiling:
+# the freshly-built alarmgen is a TARGET-arch binary and cannot run on the
+# build host. Confirmed by an actual build: "/bin/sh: 1: alarmgen: not
+# found". Build a native variant of this same recipe for the one binary
+# do_compile actually needs at build time; DEPENDS on it stages alarmgen
+# onto PATH automatically (the standard oe-core pattern for a same-source
+# build-time tool, e.g. protobuf-native's protoc).
+#
+# The native variant only needs the alarmgen binary -- not the ten
+# target daemons, their systemd units, sysusers, or board descriptors
+# (which don't apply to a build-host tool and would drag INSTR_BOARD /
+# COMPATIBLE_MACHINE assumptions into a context they don't belong in).
+# Override do_install for :class-native wholesale rather than appending.
+DEPENDS:append:class-target = " instrumentation-native"
+BBCLASSEXTEND = "native"
+
+do_install:class-native() {
+    install -d ${D}${bindir}
+    install -m 0755 ${B}/catalog/alarmgen ${D}${bindir}/alarmgen
+}
+USERADD_PACKAGES:class-native = ""
+SYSTEMD_PACKAGES:class-native = ""
+FILES:${PN}:class-native = "${bindir}/alarmgen"
+# alarmgen is a standalone code-gen tool with no runtime deps of its own;
+# RDEPENDS below is for the target daemon package and doesn't apply here
+# (several of those, e.g. chrony, have no -native RPROVIDES at all, which
+# fails the native build outright if this isn't cleared).
+RDEPENDS:${PN}:class-native = ""
+# CMakeLists.txt calls enable_testing()/add_subdirectory(test)
+# unconditionally -- -DBUILD_TESTING=OFF (EXTRA_OECMAKE below) does nothing
+# because this codebase never checks that variable, so cmake configure
+# always needs GTest, including for the native build that only wants
+# alarmgen. googletest already supports BBCLASSEXTEND=native upstream.
+DEPENDS:append:class-native = " googletest-native"
+# COMPATIBLE_MACHINE (set way below) is a target-recipe concept -- it
+# gates which MACHINE this daemon suite ships on. The native variant
+# builds alarmgen for the build host regardless of MACHINE; without
+# clearing this, bitbake skips instrumentation-native as "incompatible
+# with machine raspberrypi5" and the target recipe's DEPENDS on it goes
+# unresolved ("Nothing PROVIDES instrumentation-native").
+COMPATIBLE_MACHINE:class-native = ""
+
 # One unprivileged system user per daemon (§10, §13). sysusers.d covers a
 # running system; this covers the rootfs at build time so file ownership is
 # right before anything starts.
@@ -222,6 +266,12 @@ INSTR_BOARD:genericx86-64 = "x86-64"
 # daemons come up and describe hardware the board does not have -- so this is
 # the last point at which the mistake is cheap to catch.
 python __anonymous() {
+    # Doesn't apply to the native variant (see COMPATIBLE_MACHINE:class-native
+    # above): INSTR_BOARD:<machine> overrides don't resolve the same way
+    # under the native OVERRIDES set, so this would bb.fatal on every native
+    # build regardless of MACHINE. Confirmed by an actual build.
+    if bb.data.inherits_class('native', d):
+        return
     board = d.getVar('INSTR_BOARD')
     if not board:
         bb.fatal("instrumentation: no INSTR_BOARD mapping for MACHINE '%s'. "
