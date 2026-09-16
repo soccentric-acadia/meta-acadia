@@ -6,7 +6,8 @@ LICENSE = "CLOSED"
 
 PV = "1.0.0+git${SRCPV}"
 SRC_URI = "git://github.com/soccentric-acadia/Acadia-Instrumentation.git;protocol=ssh;user=git;branch=develop"
-SRCREV = "effb8bc3dbefd7c1577b962af06311e2d322af0a"
+# Track the branch tip — no pinned commit hash.
+SRCREV = "${AUTOREV}"
 S = "${WORKDIR}/git"
 
 inherit cmake pkgconfig systemd
