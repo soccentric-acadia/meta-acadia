@@ -6,24 +6,54 @@ LICENSE = "CLOSED"
 
 PV = "1.0.0+git${SRCPV}"
 SRC_URI = "git://github.com/soccentric-acadia/Acadia-Instrumentation.git;protocol=ssh;user=git;branch=develop"
-# Track the branch tip — no pinned commit hash.
-SRCREV = "${AUTOREV}"
+# Pinned — not AUTOREV. Two builds of the same release must produce the same
+# bits; a floating branch is incompatible with an image that has an OTA/rollback
+# story. Bump deliberately when releasing.
+# Requires the commit that makes the Yocto cross build work end to end:
+#  - instr_protos links Abseil's log_internal targets explicitly (protobuf 4.25's
+#    generated map-field code calls Abseil's CHECK/LOG machinery; FindProtobuf
+#    module-mode protobuf::libprotobuf does not propagate those deps — without
+#    this every daemon dies with "undefined reference to
+#    absl::lts_20240116::log_internal::...")
+#  - binaries live in the build tree (${B}/daemons/..., ${B}/tools/...) which is
+#    what do_install below installs — the old source-tree output_dir/ is gone
+#  - catalog generates alarms_gen.h with the HOST alarmgen when cross compiling
+#    (the bare target-name COMMAND gets rewritten by CMake to the target binary
+#    and would die with "Exec format error" on the build host)
+#  - the test suite honours -DBUILD_TESTING=OFF (no googletest dependency)
+INSTR_SRCREV ?= "b82237ad3b1f3de2fd03dfd2d8842f776d2b2dee"
+SRCREV = "${INSTR_SRCREV}"
 S = "${WORKDIR}/git"
 
 inherit cmake pkgconfig systemd
 
-# Target libs, plus host tools the build invokes: protoc + grpc_cpp_plugin
-# (protos compile at build time) and alarmgen (below).
-DEPENDS = "grpc grpc-native protobuf protobuf-native yaml-cpp openssl googletest"
+# Target libs. googletest deliberately absent: the test suite is gated on
+# BUILD_TESTING (set OFF below), so nothing in a Yocto build needs it. abseil-cpp
+# is listed explicitly (it is what the generated protobuf code links against) —
+# protobuf/grpc stage it transitively, but naming it fails loudly if that changes.
+DEPENDS = "grpc grpc-native protobuf protobuf-native abseil-cpp yaml-cpp openssl"
 
-EXTRA_OECMAKE = "-DCMAKE_BUILD_TYPE=Release"
+EXTRA_OECMAKE = "\
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=OFF \
+"
 
-# catalog/CMakeLists.txt runs the freshly-built alarmgen during the build to
-# generate alarms_gen.h; cross-compiling, that must be a build-host binary.
-# Standard oe-core pattern: a native variant of the same recipe.
+# catalog/CMakeLists.txt generates alarms_gen.h at build time. Cross-compiling,
+# it runs the HOST alarmgen (resolved with find_program(NO_CMAKE_FIND_ROOT_PATH)
+# in the source); the standard oe-core pattern stages it: a native variant of
+# this same recipe, DEPENDS'd from the target. The native variant only needs the
+# alarmgen binary — protoc/grpc_cpp_plugin come from protobuf-native/grpc-native
+# which BBCLASSEXTEND already pulls as :class-native deps of the base DEPENDS.
 BBCLASSEXTEND = "native"
 DEPENDS:append:class-target = " instrumentation-native"
-DEPENDS:append:class-native = " googletest-native"
+
+# Same workaround as acadia-hal_git.bb: gRPC carries Abseil as a private
+# (non-propagated) dependency, so static archives built against gRPC/protobuf
+# can end up with unresolved Abseil symbols at final link time (e.g. when
+# protobuf is found via pkg-config and no absl CMake targets land on the link
+# line). --copy-dt-needed-entries makes the linker follow transitive
+# shared-library dependencies and resolve those references.
+LDFLAGS:append = " -Wl,--copy-dt-needed-entries"
 
 do_install:class-native() {
     install -d ${D}${bindir}
@@ -40,9 +70,11 @@ do_install() {
     for d in istate networkd monitord hardware faults alarms logmanager telemetry ota backup; do
         install -m 0755 ${B}/daemons/${d}/${d} ${D}${bindir}/instr-${d}
     done
+    # tools/CMakeLists.txt defines all ten _ctrl executables in ONE directory
+    # (tools/), so they land flat at ${B}/tools/<name> — not ${B}/tools/<name>/<name>.
     for t in istate_ctrl network_ctrl monitor_ctrl hardware_ctrl fault_ctrl alarm_ctrl \
              log_ctrl telemetry_ctrl ota_ctrl backup_ctrl; do
-        install -m 0755 ${B}/tools/${t}/${t} ${D}${bindir}/${t}
+        install -m 0755 ${B}/tools/${t} ${D}${bindir}/${t}
     done
 
     # System files shipped in the repo; daemon users come from sysusers.d at boot.
