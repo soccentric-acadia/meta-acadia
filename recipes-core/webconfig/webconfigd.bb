@@ -5,12 +5,11 @@ LICENSE = "CLOSED"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=3382002c026d2dcb5817068a8f184313"
 
 PV = "0.1.0+git${SRCPV}"
-SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;branch=develop"
-# vendor.tar.gz is kept inside this layer (not via a path pointing outside the
-# layer) so populate_sdk_ext can package it into the relocated SDK layer tree.
-FILESEXTRAPATHS:prepend := "${THISDIR}:"
-SRC_URI += " file://vendor.tar.gz"
-SRCREV = "ad0bdde732c0fd6a792e9cbcfbb5007269a35435"
+# Track the remote's default branch (HEAD): no branch name, no SRCREV pin.
+# NOTE: bitbake's git fetcher defaults `branch=` to "master" when omitted
+# (this repo doesn't have one), so `nobranch=1` is what follows HEAD.
+SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;nobranch=1"
+SRCREV = "${AUTOREV}"
 S = "${WORKDIR}/git"
 B = "${S}"
 
@@ -20,15 +19,23 @@ inherit cargo pkgconfig systemd useradd
 
 CARGO_SRC_DIR = "${S}"
 CARGO_BUILD_FLAGS = "--release"
+
+# Build against the live crates.io registry, with dependency versions pinned by
+# the repo's committed Cargo.lock.  No vendor tarball.
+#
+# CARGO_DISABLE_BITBAKE_VENDORING: cargo_common_do_configure otherwise writes
+#   [source.crates-io] replace-with = "bitbake" into ${CARGO_HOME}/config,
+#   pointing at an empty directory — cargo would fail to resolve any crate.
+# do_compile[network]: bitbake blocks network in tasks by default (only
+#   do_fetch/do_unpack are granted it), so cargo's crates.io downloads in
+#   do_compile need the flag explicitly.
+CARGO_DISABLE_BITBAKE_VENDORING = "1"
+do_compile[network] = "1"
 export CARGO_NET_OFFLINE = "0"
 
 do_compile() {
-    rm -rf ${S}/vendor
-    cp -a ${WORKDIR}/vendor ${S}/vendor
-    # NOTE: no edition/rust-version downgrade seds here anymore.  Those were a
-    # workaround for oe-core Scarthgap's rust 1.75 and corrupted the vendored
-    # .cargo-checksum.json entries ("checksum has changed" build failure).  The
-    # build now uses the meta-lts-mixins scarthgap/rust toolchain (>= 1.86), which
+    # NOTE: no edition/rust-version downgrade seds here anymore.  The build
+    # uses the meta-lts-mixins scarthgap/rust toolchain (>= 1.86), which
     # handles the edition-2024 / rust-version 1.85+ crates natively.
 
     # oe-core's DEBUG_PREFIX_MAP injects `-fcanon-prefix-map` (requires GCC >= 13), but
@@ -39,14 +46,13 @@ do_compile() {
 
     # MUST cross-compile for the target triple: without `--target`, cargo builds a
     # host (x86_64) binary, which cargo_do_install cannot find under the Yocto target
-    # subdir and which the aarch64 image must not ship.  The source .cargo/config.toml
-    # only defines linkers for the Docker cross targets, so point the linker at the
-    # Yocto target-rust-ccld wrapper (which supplies --sysroot so libc/CRT resolve).
+    # subdir and which the aarch64 image must not ship.  The linker for the poky
+    # triple (the Yocto target-rust-ccld wrapper, which supplies --sysroot so
+    # libc/CRT resolve) is already written into ${CARGO_HOME}/config by
+    # cargo_common_do_configure; the repo's own .cargo/config.toml only defines
+    # linkers for the Docker cross targets, so nothing conflicts.
     export RUSTFLAGS="${RUSTFLAGS}"
-    export CARGO_TARGET_AARCH64_POKY_LINUX_GNU_LINKER="${RUST_TARGET_CCLD}"
-    cargo build --release --target ${RUST_HOST_SYS} --manifest-path ${S}/Cargo.toml \
-        --config 'source.crates-io.replace-with="vendored-sources"' \
-        --config 'source.vendored-sources.directory="${S}/vendor"'
+    cargo build --release --target ${RUST_HOST_SYS} --manifest-path ${S}/Cargo.toml
 }
 
 WEBCONFIG_USER = "webconfig"
