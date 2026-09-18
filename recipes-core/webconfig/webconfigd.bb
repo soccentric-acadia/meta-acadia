@@ -5,18 +5,9 @@ LICENSE = "CLOSED"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=3382002c026d2dcb5817068a8f184313"
 
 PV = "0.1.0+git${SRCPV}"
-# Pinned — not AUTOREV.  Two builds of the same release must produce the same
-# bits, and a floating HEAD is incompatible with an image that has an
-# OTA/rollback story.  AUTOREV is also banned by make lint-reproducibility
-# (it forces a git ls-remote network lookup during metadata parsing, which
-# breaks the build entirely when the container has no SSH access — the
-# same failure previously hit instrumentation, see nested history bcea171
-# → 6d721b0).  Bump deliberately when releasing.
-# NOTE: bitbake's git fetcher defaults `branch=` to "master" when omitted
-# (this repo doesn't have one), so `nobranch=1` is what follows HEAD.
-SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;nobranch=1"
-# Current upstream HEAD at the time of pinning (2026-09-18).
-SRCREV = "5d9c38f7c82ca7066309980f8dae76471ac42a70"
+# Follow the upstream repository's default branch.
+SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;branch=develop"
+SRCREV = "${AUTOREV}"
 S = "${WORKDIR}/git"
 B = "${S}"
 
