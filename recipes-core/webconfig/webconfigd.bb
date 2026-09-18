@@ -5,17 +5,32 @@ LICENSE = "CLOSED"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=3382002c026d2dcb5817068a8f184313"
 
 PV = "0.1.0+git${SRCPV}"
-# Track the remote's default branch (HEAD): no branch name, no SRCREV pin.
+# Pinned — not AUTOREV.  Two builds of the same release must produce the same
+# bits, and a floating HEAD is incompatible with an image that has an
+# OTA/rollback story.  AUTOREV is also banned by make lint-reproducibility
+# (it forces a git ls-remote network lookup during metadata parsing, which
+# breaks the build entirely when the container has no SSH access — the
+# same failure previously hit instrumentation, see nested history bcea171
+# → 6d721b0).  Bump deliberately when releasing.
 # NOTE: bitbake's git fetcher defaults `branch=` to "master" when omitted
 # (this repo doesn't have one), so `nobranch=1` is what follows HEAD.
 SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;nobranch=1"
-SRCREV = "${AUTOREV}"
+# Current upstream HEAD at the time of pinning (2026-09-18).
+SRCREV = "5d9c38f7c82ca7066309980f8dae76471ac42a70"
 S = "${WORKDIR}/git"
 B = "${S}"
 
 PACKAGES = "${PN} webconfig-static webconfig-schemas webconfig-manifest"
 
 inherit cargo pkgconfig systemd useradd
+
+# The hq-agent crate uses prost-build, whose build script shells out to a host
+# `protoc` to generate code from proto/acadiahq/agent.proto.  With the vendor
+# tarball gone (live crates.io build), nothing supplies it — provide the native
+# protobuf compiler and point prost-build at it explicitly, since PATH in
+# do_compile does not include ${STAGING_BINDIR_NATIVE}.
+DEPENDS += "protobuf-native"
+export PROTOC = "${STAGING_BINDIR_NATIVE}/protoc"
 
 CARGO_SRC_DIR = "${S}"
 CARGO_BUILD_FLAGS = "--release"
@@ -31,7 +46,7 @@ CARGO_BUILD_FLAGS = "--release"
 #   do_compile need the flag explicitly.
 CARGO_DISABLE_BITBAKE_VENDORING = "1"
 do_compile[network] = "1"
-export CARGO_NET_OFFLINE = "0"
+export CARGO_NET_OFFLINE = "false"
 
 do_compile() {
     # NOTE: no edition/rust-version downgrade seds here anymore.  The build
