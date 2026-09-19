@@ -4,26 +4,35 @@ DESCRIPTION = "C++ daemon that connects to an external Acadia server via gRPC, \
 HOMEPAGE = "https://github.com/soccentric-acadia/Acadia-Client"
 LICENSE = "CLOSED"
 
-# Use SSH transport explicitly.  The previous form
-# 'git://git@github.com/...;protocol=ssh;user=git' was contradictory —
-# the git:// scheme implies the unauthenticated git daemon (port 9418),
-# but ;protocol=ssh switched the transport to SSH; ;user=git is only
-# meaningful for the git:// protocol.  BitBake accepts the combination
-# but the user=git part is silently ignored, and the URL displayed in
-# fetch logs is misleading.  Use a clean SSH URL (issue #35).
+# Follow the upstream repository's develop branch (same policy as webconfigd).
+# develop carries the Yocto-ready CMake logic: it prefers an installed
+# acadia-hal CMake package and falls back to a sibling Acadia-HAL source tree.
+# That sibling is provided by the second git:// URI below, fetched next to the
+# client so ${CMAKE_SOURCE_DIR}/../Acadia-HAL resolves as upstream intends.
+#
+# Use SSH transport.  BitBake converts this to 'ssh://git@github.com/...' —
+# without ;user=git it connects as the container's local user (builder@) and
+# auth fails with 'Permission denied (publickey)'.  The earlier form
+# 'git://git@github.com/...;user=git' also worked but displayed a misleading
+# fetch URL; the explicit ;user=git parameter is the clean spelling (issue #35).
 SRC_URI = " \
-    git://github.com/soccentric-acadia/Acadia-Client.git;protocol=ssh;branch=release \
+    git://github.com/soccentric-acadia/Acadia-Client.git;protocol=ssh;user=git;branch=develop;name=client;destsuffix=git \
+    git://github.com/soccentric-acadia/Acadia-HAL.git;protocol=ssh;user=git;branch=develop;name=hal;destsuffix=Acadia-HAL \
     file://acadia-client.service \
-    file://0001-fix-grpc-cpp-plugin-cross-compile.patch \
 "
-# TODO: replace with the real commit SHA once the upstream repo exists:
-#   SRCREV = "<40-char-sha>"
-# Using a hardcoded placeholder avoids a parse-time network fetch (AUTOREV
-# forces BitBake to contact the remote during parsing, breaking offline builds).
-# The placeholder SHA below was chosen as an unguessable-but-fixed value
-# that will fail the fetch loudly if the upstream repo is wired up
-# without the real SHA being substituted.  Issue #61.
-SRCREV = "0000000000000000000000000000000000000000"
+
+# Client tracks develop automatically (AUTOREV — a _git recipe with no SRCREV
+# fails parsing with "Please set a valid SRCREV").
+SRCREV_client = "${AUTOREV}"
+#
+# The embedded HAL sibling pins the Acadia-HAL develop HEAD: the client's
+# develop adapters (fan_adapter, hdmi_adapter, …) link against HAL libs and
+# protos that only exist there (the acadia-hal_git.bb master pin predates
+# them).  Pinned — not AUTOREV — so client builds are reproducible.
+SRCREV_hal = "dca85207b3df2999c187e2727181f22f3c88736f"
+
+# Required when multiple SCM fetchers are used (client + embedded HAL).
+SRCREV_FORMAT = "client_hal"
 
 PV = "1.0+git${SRCPV}"
 S = "${WORKDIR}/git"
@@ -32,8 +41,57 @@ inherit cmake systemd useradd
 
 OECMAKE_SOURCEPATH = "${S}"
 
+# Unit tests pull GTest in at configure time (find_package(GTest REQUIRED))
+# but are never shipped in the target image — build without them instead of
+# bloating the target sysroot.
+OECMAKE_EXTRA_OECMAKE = "-DBUILD_TESTS=OFF"
+
+# Cross-compilation guard for gRPC::grpc_cpp_plugin — same workaround as
+# acadia-hal_git.bb (issue #48): gRPCConfig.cmake skips gRPCPluginTargets.cmake
+# when CMAKE_CROSSCOMPILING, so the imported target does not exist and the
+# unconditional get_target_property() calls fatal-error at configure time.
+# Wrapping them in TARGET checks lets the find_program() fallbacks locate the
+# host-native plugin via PATH.
+#
+#   - The pinned HAL sibling is frozen → sanity-check loudly on drift, like
+#     acadia-hal_git.bb does.
+#   - The client CMakeLists.txt floats on develop → best-effort only, so the
+#     sed self-retires once upstream guards the call (the Acadia-Client
+#     working tree carries exactly that fix for the next push).
+do_configure:prepend() {
+    CLIENT_CMAKE="${S}/CMakeLists.txt"
+    if [ -f "${CLIENT_CMAKE}" ] && \
+       ! grep -q 'if(TARGET gRPC::grpc_cpp_plugin)' "${CLIENT_CMAKE}" && \
+       grep -q 'get_target_property(GRPC_CPP_PLUGIN gRPC::grpc_cpp_plugin LOCATION)' "${CLIENT_CMAKE}"; then
+        sed -i \
+            's|^\(\s*\)get_target_property(GRPC_CPP_PLUGIN gRPC::grpc_cpp_plugin LOCATION)$|\1if(TARGET gRPC::grpc_cpp_plugin)\n\1    get_target_property(GRPC_CPP_PLUGIN gRPC::grpc_cpp_plugin LOCATION)\n\1endif()|' \
+            "${CLIENT_CMAKE}"
+    fi
+
+    HAL_PROTO_CMAKE="${WORKDIR}/Acadia-HAL/protos/CMakeLists.txt"
+    if [ ! -f "${HAL_PROTO_CMAKE}" ]; then
+        bbfatal "acadia-client: expected ${HAL_PROTO_CMAKE} (embedded HAL sibling) after do_unpack — SRC_URI layout changed?"
+    fi
+    if ! grep -q 'get_target_property(GRPC_CPP_PLUGIN gRPC::grpc_cpp_plugin LOCATION)' "${HAL_PROTO_CMAKE}"; then
+        bbfatal "acadia-client: grpc-plugin sed pattern did not match in ${HAL_PROTO_CMAKE}. SRCREV_hal likely drifted; update the in-recipe sed."
+    fi
+    sed -i \
+        's|^\(\s*\)get_target_property(GRPC_CPP_PLUGIN gRPC::grpc_cpp_plugin LOCATION)$|\1if(TARGET gRPC::grpc_cpp_plugin)\n\1    get_target_property(GRPC_CPP_PLUGIN gRPC::grpc_cpp_plugin LOCATION)\n\1endif()|' \
+        "${HAL_PROTO_CMAKE}"
+}
+
 DEPENDS += "grpc grpc-native protobuf spdlog tomlplusplus yaml-cpp sqlite3"
 RDEPENDS:${PN} = "grpc spdlog yaml-cpp libsqlite3"
+
+# The embedded HAL sibling (see SRC_URI) compiles with -Werror, and HAL
+# source ignores write()/read() return values in places — same suppression
+# acadia-hal_git.bb needs.
+CXXFLAGS:append = " -Wno-error=unused-result"
+
+# The HAL is linked as a static archive and its gRPC objects reference abseil
+# symbols that gRPC's shared libraries expose only transitively; let the
+# linker follow DT_NEEDED entries — same as acadia-hal_git.bb.
+LDFLAGS:append = " -Wl,--copy-dt-needed-entries"
 
 USERADD_PACKAGES = "${PN}"
 USERADD_PARAM:${PN} = "-r -s /sbin/nologin -d /var/lib/acadia -g acadia acadia"
