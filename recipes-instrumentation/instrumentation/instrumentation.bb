@@ -79,6 +79,10 @@ do_install() {
     # Standalone PREEMPT_RT demonstration app (task 005): not a daemon, no
     # unit, no ctrl tool — installed explicitly like any standalone tool.
     install -m 0755 ${B}/tools/instr-rt-test ${D}${bindir}/instr-rt-test
+    # istate software watchdog (task 005): standalone observe-only tool with
+    # its own unit (instr-istate-watchdog.service, SYSTEMD_SERVICE below) and
+    # its own instr-watchdog user from the sysusers.d conf.
+    install -m 0755 ${B}/tools/instr-istate-watchdog ${D}${bindir}/instr-istate-watchdog
 
     # System files shipped in the repo; daemon users come from sysusers.d at boot.
     install -d ${D}${systemd_unitdir}/system
@@ -119,7 +123,7 @@ do_install() {
 }
 
 SYSTEMD_PACKAGES = "${PN}"
-SYSTEMD_SERVICE:${PN} = "instr-istate.service instr-networkd.service instr-monitord.service instr-hardware.service instr-faults.service instr-alarms.service instr-logmanager.service instr-telemetry.service instr-ota.service instr-backup.service"
+SYSTEMD_SERVICE:${PN} = "instr-istate.service instr-networkd.service instr-monitord.service instr-hardware.service instr-faults.service instr-alarms.service instr-logmanager.service instr-telemetry.service instr-ota.service instr-backup.service instr-istate-watchdog.service"
 SYSTEMD_AUTO_ENABLE = "enable"
 
 # Acadia-OS ships instrumentation on exactly these machines (acadia-image.bb
