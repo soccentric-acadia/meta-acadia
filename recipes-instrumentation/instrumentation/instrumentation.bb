@@ -21,7 +21,7 @@ SRC_URI = "git://github.com/soccentric-acadia/Acadia-Instrumentation.git;protoco
 #    (the bare target-name COMMAND gets rewritten by CMake to the target binary
 #    and would die with "Exec format error" on the build host)
 #  - the test suite honours -DBUILD_TESTING=OFF (no googletest dependency)
-INSTR_SRCREV ?= "b82237ad3b1f3de2fd03dfd2d8842f776d2b2dee"
+INSTR_SRCREV ?= "3e885c2c72a0aa0746d1a913b02cf901bc736ed9"
 SRCREV = "${INSTR_SRCREV}"
 S = "${WORKDIR}/git"
 
@@ -76,6 +76,9 @@ do_install() {
              log_ctrl telemetry_ctrl ota_ctrl backup_ctrl; do
         install -m 0755 ${B}/tools/${t} ${D}${bindir}/${t}
     done
+    # Standalone PREEMPT_RT demonstration app (task 005): not a daemon, no
+    # unit, no ctrl tool — installed explicitly like any standalone tool.
+    install -m 0755 ${B}/tools/instr-rt-test ${D}${bindir}/instr-rt-test
 
     # System files shipped in the repo; daemon users come from sysusers.d at boot.
     install -d ${D}${systemd_unitdir}/system
