@@ -14,7 +14,9 @@ SRC_URI = " \
     file://security.md \
 "
 # Pin the private upstream to avoid AUTOREV parse-time network lookups.
-SRCREV = "a385917dd57d65333506a522f250f91fc72dc0f8"
+# a385917 (May 30) was rebased upstream; master HEAD is 7184d94 (verified via
+# git ls-remote over ssh).
+SRCREV = "7184d94240c95ce6dc5eb679da0559cccd3bb819"
 
 PV = "1.0+git${SRCPV}"
 S = "${WORKDIR}/git"
