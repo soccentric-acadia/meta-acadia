@@ -1,0 +1,23 @@
+[Unit]
+Description=Persistent store partition (LABEL=pst) mounted at /pst
+Documentation=file:///usr/lib/acadia-pst-init/acadia-pst-init.sh
+# Task 003: dedicated 1 GB ext4 partition (p4 in sdimage-rpi5.wks).
+#
+# Label-based (LABEL=pst) so the unit is device-agnostic (mmcblk / NVMe /
+# USB) — same rationale as the swupdate pre-install label lookup.
+#
+# Migration safety: devices flashed with the OLD 4-partition layout have no
+# LABEL=pst; ConditionPathExists skips this unit silently, so boot proceeds
+# exactly as before (the instrumentation units' RequiresMountsFor=/pst is
+# trivially satisfied for a plain rootfs directory). On devices with the
+# new layout the unit joins the local-fs chain normally.
+ConditionPathExists=/dev/disk/by-label/pst
+
+[Mount]
+What=LABEL=pst
+Where=/pst
+Type=ext4
+Options=defaults
+
+[Install]
+WantedBy=local-fs.target

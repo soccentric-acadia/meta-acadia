@@ -24,14 +24,14 @@
 │                  Raspberry Pi 5  256 GB SD card                      │
 │                                                                      │
 │  ┌──────────┐  ┌────────────────┐  ┌────────────────┐  ┌──────────┐ │
-│  │  p1/boot │  │  p2/rootfs-a   │  │  p3/rootfs-b   │  │  p4/home │ │
-│  │  256 MB  │  │    8192 MB     │  │    8192 MB     │  │  ~238 GB │ │
-│  │  FAT32   │  │    ext4        │  │    ext4        │  │   ext4   │ │
-│  │          │  │  ← active →    │  │  ← standby →   │  │  /home   │ │
-│  └──────────┘  └────────────────┘  └────────────────┘  └──────────┘ │
-│       │                ▲                    ▲                        │
-│  cmdline.txt      root=PARTUUID=…       written by                   │
-│  selects slot     (current boot)        SWUpdate                     │
+│  │  p1/boot │  │ p2/rootfs-a  │  │ p3/rootfs-b  │  │ p4/pst │ │ p5/home │ │
+│  │  256 MB  │  │   8192 MB    │  │   8192 MB    │  │ 1 GB   │ │ ~237 GB │ │
+│  │  FAT32   │  │    ext4      │  │    ext4      │  │ ext4   │ │  ext4   │ │
+│  │          │  │ ← active →   │  │ ← standby →  │  │ /pst   │ │ /home   │ │
+│  └──────────┘  └──────────────┘  └──────────────┘  └────────┘ └─────────┘ │
+│       │                ▲                    ▲                             │
+│  cmdline.txt      root=PARTUUID=…       written by                          │
+│  selects slot     (current boot)        SWUpdate                           │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -50,12 +50,14 @@ root=PARTUUID=<uuid-of-active-slot> ...
 `post-install.sh` atomically rewrites that `root=` parameter to point at the
 newly written slot, then the device reboots into it.
 
-The `/home` partition (p4) is **never touched** by an OTA update. The
-`rpi5-home-init.service` unit creates `/home/rpi` (matching the in-rootfs
-skeleton) and copies `/etc/skel` into it on first boot. Anything that must
-survive updates — config files, application state, certificates, logs —
-should live under `/home/<user>/` or `/home/acadia/` (the Acadia service
-account's persistent data directory).
+The `/pst` partition (p4, task 003) and the `/home` partition (p5) are
+**never touched** by an OTA update. The `acadia-pst-init.service` unit
+provisions ownership and per-spoke store directories on the freshly mounted
+`/pst` (owned by `instr-istate:instr`); the `PstStore` of istate then seeds
+`/pst/system` with the daemon configuration set. Anything that must survive
+updates — config files, application state, certificates, logs — should live
+under `/pst/` (the istate-managed persistent store: system config, alarm
+state, collected logs, backups) or `/home/<user>/` / `/home/acadia/`.
 
 ---
 
@@ -66,7 +68,8 @@ account's persistent data directory).
 | p1 | `boot` | 256 MB | FAT32 | `/boot` | Firmware, kernel, DTBs, overlays, `cmdline.txt` |
 | p2 | `rootfs-a` | 8192 MB | ext4 | `/` | Root filesystem — Slot A (active after factory flash) |
 | p3 | `rootfs-b` | 8192 MB | ext4 | *(none)* | Root filesystem — Slot B (standby, target of next OTA) |
-| p4 | `home` | ~238 GB (rest of card) | ext4 | `/home` | Persistent user / application data |
+| p4 | `pst` | 1024 MB | ext4 | `/pst` | Persistent store, owned by istate (task 003; mounted by `pst.mount`, skipped on devices with the old 4-partition layout) |
+| p5 | `home` | ~237 GB (rest of card) | ext4 | `/home` | Persistent user / application data |
 
 ---
 

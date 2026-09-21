@@ -1,0 +1,19 @@
+[Unit]
+Description=Prepare /pst persistent store ownership and layout (task 003)
+Documentation=file:///usr/lib/acadia-pst-init/acadia-pst-init.sh
+# RequiresMountsFor (not only After=local-fs.target): local-fs.target is
+# reached while local filesystems are *being* processed, not when they are
+# *all* mounted — the same race documented as issue #109 for
+# rpi5-home-init.service.
+RequiresMountsFor=/pst
+After=local-fs.target systemd-sysusers.service
+# Old 4-partition layout: no LABEL=pst exists, keep the rootfs fallback.
+ConditionPathExists=/dev/disk/by-label/pst
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/acadia-pst-init/acadia-pst-init.sh
+
+[Install]
+WantedBy=multi-user.target

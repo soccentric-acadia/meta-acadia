@@ -3,15 +3,42 @@
 # p1  /boot       256 MB   FAT32  kernel, DTBs, config.txt, cmdline.txt
 # p2  /           8192 MB  ext4   rootfs-a  (active slot, populated at build time)
 # p3  <none>      8192 MB  ext4   rootfs-b  (standby slot, written by SWUpdate)
-# p4  /home       512 MB → grows to fill card on first boot via rpi5-home-init
+# p4  /pst        1024 MB  ext4   persistent store (task 003)
+# p5  /home       512 MB → grows to fill card on first boot via rpi5-home-init
 #
-# p4 is mounted at /home so user home directories (e.g. /home/rpi) persist
+# p4 is mounted at /pst by the packaged systemd unit pst.mount (LABEL=pst),
+# NOT by a wic fstab entry: the plain .rootfs.ext4 that `make swu` packages
+# carries no wic fstab entries, so a rootfs-packaged mount unit is the only
+# mechanism that mounts identically in factory-flash and OTA images.
+# /pst holds the istate-managed persistent store (system config, alarm
+# state, collected logs, backups) and is NEVER written by SWUpdate.
+#
+# p5 is mounted at /home so user home directories (e.g. /home/rpi) persist
 # across OTA updates.  On first boot, rpi5-home-init.service creates /home/rpi
 # because the fresh empty partition hides the in-rootfs skeleton copy.
+#
+# ORDERING MATTERS: /pst must be declared BEFORE /home so /home remains the
+# LAST partition — rpi5-home-init expands the /home partition to 100 % of
+# the card with `parted resizepart <N> 100%`, which is only valid while /home
+# is the final partition (the partition number is derived at runtime, so it
+# works for p5 as well).
+#
+# GPT partition table (task 003): five data partitions do not fit in an
+# msdos disklabel's four primaries.  The msdos fallback (extended container
+# + logical partitions) would trap the LAST partition inside the container,
+# so `parted resizepart <N> 100%` could never grow /home beyond the image
+# footprint.  GPT has no such constraint, is required for RPi5 secure boot
+# anyway, and is mandatory for CM5 NVMe boot (PCIe opt-in, cm5.yaml).
+# PARTUUIDs become per-build UUIDs on GPT; the SWUpdate flow derives
+# root=PARTUUID from the live device (post-install.sh) and slot switches
+# are label-based (pre-install.sh), so nothing depends on cross-build
+# PARTUUID stability.
 #
 # SWUpdate writes the new rootfs to the inactive slot (p2 or p3) and
 # updates /boot/cmdline.txt to point root= at the new PARTUUID.
 # On the next reboot the updated slot becomes active.
+
+bootloader --ptable gpt --timeout=0
 
 part /boot --source bootimg-partition --ondisk mmcblk0 --fstype=vfat --label boot --active --align 4096 --fixed-size 256M
 
@@ -19,6 +46,20 @@ part / --source rootfs --ondisk mmcblk0 --fstype=ext4 --label rootfs-a --align 4
 
 part --source empty --ondisk mmcblk0 --fstype=ext4 --label rootfs-b --align 4096 --fixed-size 8192M
 
-# p4 is created at 512 MB here so the .wic image stays small.
+# p4: dedicated persistent store for istate-managed state (task 003).
+# No mountpoint here on purpose — wic would write a fstab line, but the OTA
+# rootfs (.rootfs.ext4 from `make swu`) does not carry wic fstab entries.
+# pst.mount (acadia-pst-init recipe) mounts it by LABEL and skips itself
+# silently on devices still using the old 4-partition layout.
+#
+# NOTE on --source: `--source empty` (the EmptyPartitionPlugin) creates an
+# UNFORMATTED partition (pure zeros, no mkfs).  To get an mkfs'd empty ext4
+# volume, omit --source so partition.py takes its empty-partition branch
+# (prepare_empty_partition_ext).  rootfs-b (p3) keeps --source empty
+# deliberately: SWUpdate streams the complete rootfs image onto it, so an
+# unformatted target is exactly what it wants.
+part --ondisk mmcblk0 --fstype=ext4 --label pst --align 4096 --fixed-size 1024M
+
+# p5 is created at 512 MB here so the .wic image stays small.
 # rpi5-home-init.service expands it to fill the actual card on first boot.
-part /home --source empty --ondisk mmcblk0 --fstype=ext4 --label home --align 4096 --fixed-size 512M
+part /home --ondisk mmcblk0 --fstype=ext4 --label home --align 4096 --fixed-size 512M

@@ -29,6 +29,14 @@ IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " swupdate swupdate-www rpi5-swu
 # Home partition init
 IMAGE_INSTALL:append = " rpi5-home-init"
 
+# Persistent /pst store (task 003): partition p4 is declared in
+# sdimage-rpi5.wks; acadia-pst-init ships pst.mount (LABEL=pst, skipped
+# silently on devices without the partition) plus the ownership bootstrap
+# the instrumentation units' ReadWritePaths contract requires.  Scoped to
+# the A/B WKS boards; single-partition boards have no LABEL=pst partition.
+IMAGE_INSTALL:append:raspberrypi5 = " acadia-pst-init"
+IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " acadia-pst-init"
+
 # Root filesystem expansion (feature.txt §3: "Optional root filesystem
 # expansion service for single-partition deployments"). rpi5/cm5 use the
 # fixed-size A/B WKS layout (sdimage-rpi5.wks) where the two rootfs slots
