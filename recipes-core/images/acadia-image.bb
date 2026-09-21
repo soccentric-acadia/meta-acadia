@@ -71,6 +71,10 @@ IMAGE_INSTALL:append = " packagegroup-acadia-middleware sudo"
 # need cloud/telemetry connectivity should add
 # 'packagegroup-acadia-cloud' to IMAGE_INSTALL in their own image recipe.
 
+# Real-time diagnostics (task 002): rt-tests ships cyclictest / hackbench /
+# hwlatdetect for scheduling-latency measurement on the PREEMPT_RT kernel.
+IMAGE_INSTALL:append = " rt-tests"
+
 # Hardware interface tools
 IMAGE_INSTALL:append = " \
     i2c-tools python3-smbus python3-smbus2 \
