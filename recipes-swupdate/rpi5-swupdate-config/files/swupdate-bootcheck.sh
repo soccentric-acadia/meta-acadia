@@ -5,6 +5,12 @@
 # completes BEFORE network services start. If the health check fails, the
 # system rolls back before any network exposure.
 #
+# OS-016 (tryboot): the boot being checked came from the new slot via the
+# firmware tryboot mechanism. Confirmation makes the slot PERMANENT by
+# rewriting autoboot.txt (boot_prefix=<slot>/, dropping boot_prefix_try) and
+# mirroring the slot's files to the /boot root fallback. Failure rolls back
+# to prev_slot and reboots.
+#
 # Health check verifies:
 #   - acadia-client.service is active AND running (not just started)
 #   - The service has been running for minimum time (allows services to settle)
@@ -26,11 +32,13 @@ fi
 # writable mount.  A read loop assigns values without ever evaluating
 # them, and tolerates a corrupt or stale boot_state file.
 slot=""
+prev_slot=""
 tries_remaining=""
 confirmed=""
 while IFS='=' read -r key value; do
     case "${key}" in
         slot)            slot="${value}" ;;
+        prev_slot)       prev_slot="${value}" ;;
         tries_remaining) tries_remaining="${value}" ;;
         confirmed)       confirmed="${value}" ;;
         \#*|"")          : ;;            # comment / blank line
@@ -102,18 +110,18 @@ if [[ "${HEALTH_OK}" == "true" ]]; then
 fi
 
 # Verify kernel/DTB files are intact (per-file size bounds; issue #26).
-# Each file has a different reasonable size range, so we cannot share
-# a single bound.  The previous code used a single `if SIZE < 1MB ||
-# SIZE > 10MB` for both, which always tripped on a 60 KB DTB and
-# caused HEALTH_OK=false on every healthy boot.
+# Files are checked inside the booted slot's dir (tryboot layout, OS-016);
+# the /boot/<slot>/ dir holds the per-slot kernel/dtb/cmdline.
+SLOT_DIR="/boot/$(echo "${slot:-a}" | tr 'a-z' 'A-Z')"
+PREV_DIR="/boot/$(echo "${prev_slot:-b}" | tr 'a-z' 'A-Z')"
 if [[ "${HEALTH_OK}" == "true" ]]; then
     for f in kernel_2712.img bcm2712-rpi-5-b.dtb; do
-        if [[ ! -f "/boot/${f}" ]]; then
+        if [[ ! -f "${SLOT_DIR}/${f}" ]]; then
             HEALTH_OK=false
-            logger -t swupdate-bootcheck "${f} missing after boot"
+            logger -t swupdate-bootcheck "${f} missing in ${SLOT_DIR} after boot"
             break
         fi
-        SIZE=$(stat -c%s "/boot/${f}" 2>/dev/null || echo 0)
+        SIZE=$(stat -c%s "${SLOT_DIR}/${f}" 2>/dev/null || echo 0)
         case "${f}" in
             kernel_2712.img)
                 # Compiled kernel: at least 1 MB (typical 7-15 MB on rpi5).
@@ -140,20 +148,54 @@ if [[ "${HEALTH_OK}" == "true" ]]; then
     done
 fi
 
+# ---------------------------------------------------------------------------
+# Atomic write helper (task 46): write temp → fsync → rename.
+# ---------------------------------------------------------------------------
+atomic_write() {
+    local dst="$1" tmp="${1}.tmp"
+    cat > "${tmp}"
+    sync -f "${tmp}" 2>/dev/null || sync
+    mv -f "${tmp}" "${dst}"
+}
+
 if [[ "${HEALTH_OK}" == "true" ]]; then
     mount -o remount,rw /boot
     sed -i 's/confirmed=false/confirmed=true/' "${BOOT_STATE}"
+    # OS-016: make the confirmed slot PERMANENT — autoboot.txt points
+    # boot_prefix at the new slot and boot_prefix_try is dropped. The slot's
+    # files are mirrored to the /boot root fallback so the firmware still
+    # boots if autoboot.txt becomes unreadable.
+    if [[ -d "${SLOT_DIR}" && -f "${SLOT_DIR}/cmdline.txt" ]]; then
+        printf '[all]\nboot_prefix=%s/\n' "$(basename "${SLOT_DIR}")" \
+            | atomic_write /boot/autoboot.txt
+        cp -f "${SLOT_DIR}/cmdline.txt" /boot/cmdline.txt
+        for f in kernel_2712.img bcm2712-rpi-5-b.dtb; do
+            [[ -f "${SLOT_DIR}/${f}" ]] && cp -f "${SLOT_DIR}/${f}" "/boot/${f}" || true
+        done
+    fi
+    rm -f "${BOOT_STATE}"
     mount -o remount,ro /boot
     logger -t swupdate-bootcheck "Slot ${slot} confirmed healthy"
 else
-    logger -t swupdate-bootcheck "Slot ${slot} unhealthy — rolling back"
+    logger -t swupdate-bootcheck "Slot ${slot} unhealthy — rolling back to ${prev_slot:-previous}"
     mount -o remount,rw /boot
-    if [[ -f /boot/cmdline.txt.prev ]]; then
-        cp /boot/cmdline.txt.prev /boot/cmdline.txt
+    if [[ -d "${PREV_DIR}" && -f "${PREV_DIR}/cmdline.txt" ]]; then
+        printf '[all]\nboot_prefix=%s/\n' "$(basename "${PREV_DIR}")" \
+            | atomic_write /boot/autoboot.txt
+        cp -f "${PREV_DIR}/cmdline.txt" /boot/cmdline.txt
+        for f in kernel_2712.img bcm2712-rpi-5-b.dtb; do
+            [[ -f "${PREV_DIR}/${f}" ]] && cp -f "${PREV_DIR}/${f}" "/boot/${f}" || true
+        done
+    else
+        # Legacy layout fallback (slot dirs never created).
+        if [[ -f /boot/cmdline.txt.prev ]]; then
+            cp /boot/cmdline.txt.prev /boot/cmdline.txt
+        fi
+        for f in kernel_2712.img bcm2712-rpi-5-b.dtb; do
+            [[ -f "/boot/${f}.prev" ]] && cp "/boot/${f}.prev" "/boot/${f}" || true
+        done
+        [[ -f /boot/autoboot.txt ]] && rm -f /boot/autoboot.txt
     fi
-    for f in kernel_2712.img bcm2712-rpi-5-b.dtb; do
-        [[ -f "/boot/${f}.prev" ]] && cp "/boot/${f}.prev" "/boot/${f}" || true
-    done
     rm -f "${BOOT_STATE}" /boot/cmdline.txt.prev \
           /boot/kernel_2712.img.prev /boot/bcm2712-rpi-5-b.dtb.prev
     mount -o remount,ro /boot

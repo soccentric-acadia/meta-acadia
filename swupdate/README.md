@@ -91,25 +91,42 @@ Upload rpi5-1.2.3.swu  ──────────────────►
                                                 • findmnt / to get active device
                                                 • derive inactive device
                                                   (p2↔p3)
+                                                • record active slot →
+                                                  /run/swupdate-prev-slot
                                                 • ln -sf <inactive> /dev/swupdate-inactive
                                              3. Stream rootfs.ext4.gz → raw write
                                                 to /dev/swupdate-inactive
-                                             4. Run post-install.sh
+                                             4. Run post-install.sh (OS-016 tryboot)
                                                 • blkid → PARTUUID of new slot
-                                                • remount /boot rw
-                                                • sed root=PARTUUID in cmdline.txt
+                                                • move kernel/DTB into /boot/<NEW>/
+                                                • write /boot/<NEW>/cmdline.txt root=PARTUUID
+                                                • arm /boot/autoboot.txt:
+                                                  boot_prefix=<confirmed>/
+                                                  boot_prefix_try=<NEW>/
+                                                • write /boot/boot_state
+                                                  (tries=3 confirmed=false prev_slot)
                                                 • remount /boot ro
-                                             5. postupdatecmd = /sbin/reboot
+                                             5. postupdatecmd =
+                                                /usr/lib/swupdate/reboot-tryboot.sh
+                                                → reboot "0 tryboot"
                                                 (configured in swupdate.cfg)
 
-                                             ── reboot ──
+                                             ── tryboot boot (flag consumed once) ──
 
-                                             Bootloader reads /boot/cmdline.txt
-                                             → boots new slot
+                                             Firmware applies boot_prefix_try=<NEW>/
+                                             → boots the new slot. A panic or hang
+                                             consumes the tryboot flag; the NEXT boot
+                                             uses boot_prefix (confirmed slot) —
+                                             firmware-level rollback with zero
+                                             userspace involvement.
 
                                              swupdate-bootcheck.service runs
-                                             → logs active slot to syslog
-                                             → writes /run/swupdate-active-slot
+                                             → health check (services/network/storage)
+                                             → healthy: boot_prefix=<NEW>/ made
+                                             permanent in autoboot.txt, slot files
+                                             mirrored to /boot root
+                                             → unhealthy: boot_prefix restored to
+                                             prev_slot, reboot
 ```
 
 ---

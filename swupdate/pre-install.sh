@@ -51,6 +51,10 @@ fi
 
 echo "[swupdate pre-install] target slot: ${INACTIVE_SLOT} (${INACTIVE_DEV})"
 
+# OS-016: record the ACTIVE slot for post-install's boot_state (prev_slot),
+# used by boot-watchdog / swupdate-bootcheck to roll back to the confirmed
+# slot without userspace having to guess it.
+
 # Backup kernel and DTB so boot-watchdog / bootcheck can restore them on rollback
 # Task 46: atomic copy (write temp, fsync, rename) so a power loss never leaves
 # a truncated .prev file that would fail the rollback restore.
@@ -68,6 +72,9 @@ mount -o remount,ro /boot
 # Create the stable symlink the image handler will write to
 ln -sf "${INACTIVE_DEV}" /dev/swupdate-inactive
 
-# Persist slot info for post-install
+# Persist slot info for post-install. /run/swupdate-prev-slot carries the
+# ACTIVE (confirmed) slot for boot_state.prev_slot (OS-016 tryboot rollback).
 echo "${INACTIVE_SLOT}" > /run/swupdate-target-slot
 echo "${INACTIVE_DEV}"  > /run/swupdate-target-dev
+echo "$(echo "${INACTIVE_LABEL#rootfs-}" | tr 'A-Z' 'a-z')" > /run/swupdate-prev-slot \
+    2>/dev/null || true

@@ -10,6 +10,7 @@ SRC_URI = " \
     file://swupdate.cfg \
     file://pre-install.sh \
     file://post-install.sh \
+    file://reboot-tryboot.sh \
     file://swupdate-bootcheck.sh \
     file://swupdate-bootcheck.service \
     file://swupdate-webui.conf \
@@ -53,6 +54,8 @@ do_install() {
                     ${D}${libdir}/swupdate/pre-install.sh
     install -m 0755 ${WORKDIR}/post-install.sh \
                     ${D}${libdir}/swupdate/post-install.sh
+    install -m 0755 ${WORKDIR}/reboot-tryboot.sh \
+                    ${D}${libdir}/swupdate/reboot-tryboot.sh
     install -m 0755 ${WORKDIR}/swupdate-bootcheck.sh \
                     ${D}${libdir}/swupdate/swupdate-bootcheck.sh
 

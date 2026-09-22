@@ -17,8 +17,16 @@ setup() {
 }
 
 @test "post-install: boot_state write is atomic" {
-    grep -qE 'boot_state\.tmp' "${POST}"
-    grep -qE 'mv -f.*boot_state\.tmp.*boot_state' "${POST}"
+    # Either the explicit temp+rename pattern or the atomic_write helper
+    # (write temp → fsync → rename) satisfies the atomicity requirement.
+    if grep -qE 'atomic_write' "${POST}"; then
+        grep -qE 'atomic_write /boot/boot_state' "${POST}"
+        grep -qE 'local dst="\$1" tmp="\$\{1\}\.tmp"' "${POST}"
+        grep -qE 'mv -f "\$\{tmp\}" "\$\{dst\}"' "${POST}"
+    else
+        grep -qE 'boot_state\.tmp' "${POST}"
+        grep -qE 'mv -f.*boot_state\.tmp.*boot_state' "${POST}"
+    fi
 }
 
 @test "post-install: no direct in-place sed -i on cmdline.txt" {
