@@ -21,9 +21,9 @@ SRC_URI = " \
     file://acadia-client.service \
 "
 
-# Client tracks develop automatically (AUTOREV — a _git recipe with no SRCREV
-# fails parsing with "Please set a valid SRCREV").
-SRCREV_client = "${AUTOREV}"
+# Client pinned (OS-028: the recipe is now in the production image, so the
+# build must be reproducible; bump this pin when client changes are validated).
+SRCREV_client = "a4670313f16708bb109ce66beeaa5dbc96ea684d"
 #
 # The embedded HAL sibling pins the Acadia-HAL develop HEAD: the client's
 # develop adapters (fan_adapter, hdmi_adapter, …) link against HAL libs and
