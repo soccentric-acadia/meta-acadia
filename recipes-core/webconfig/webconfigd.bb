@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=3382002c026d2dcb5817068a8f184313"
 PV = "0.1.0+git${SRCPV}"
 # Follow the upstream repository's default branch.
 SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;branch=develop"
-SRCREV = "${AUTOREV}"
+SRCREV = "30887b5a9eca298417652c38b7f35ff30a3ceccc"  # X-009: pinned — a reproducible image build must not track a branch
 S = "${WORKDIR}/git"
 B = "${S}"
 
