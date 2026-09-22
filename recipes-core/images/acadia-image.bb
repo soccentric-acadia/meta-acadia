@@ -174,9 +174,12 @@ IMAGE_FEATURES += "ptest-pkgs"
 # create /home/rpi on the volatile rootfs, which is then hidden
 # by the persistent mount at /home.
 #
-# acaida login account — password login enabled (password: acaida,
-# SHA-512-crypt, fixed salt for reproducible builds).  Same -M
-# reasoning as above: /home/acaida is recorded in /etc/passwd and
+# acaida login account — LOCKED (no password, no SSH password auth).
+# OS-001: a hard-coded, fleet-wide password (fixed salt, same hash on every
+# shipped image) was removed — any holder of the audit file could log in to
+# every device. Per-device credentials are provisioned at first use
+# (task 007); until then the account is disabled like the rpi account.
+# Same -M reasoning as above: /home/acaida is recorded in /etc/passwd and
 # created on the persistent p4 (/home) partition by rpi5-home-init
 # on first boot.
 inherit extrausers
@@ -184,6 +187,6 @@ EXTRA_USERS_PARAMS = "\
     useradd -M -s /bin/bash -G sudo rpi; \
     usermod -L rpi; \
     useradd -M -s /bin/bash -d /home/acaida acaida; \
-    usermod -p '\$6\$acadiaos\$7g./Wtafy6arBlbXkZ2qbgnpz2ZrxsFT8La8OUE3cc0/t0/wIka0teWFWiqZ4d4w1hv9mre1YudRi783PtD8x.' acaida; \
+    usermod -L acaida; \
 "
 
