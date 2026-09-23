@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=3382002c026d2dcb5817068a8f184313"
 PV = "0.1.0+git${SRCPV}"
 # Follow the upstream repository's default branch.
 SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;branch=develop"
-SRCREV = "9bb7887498d422a3dd55194262728254ff7fe43a"  # T-P13: mandatory Ed25519 verification of HQ configuration writes (full sha in the release manifest, P-O02)
+SRCREV = "80328cd6c0fbb16461f5b7cc3d14b60243ace761"  # T-P18: write applies + reports per-applier outcomes + auto-confirm (full sha in the release manifest, P-O02)
 S = "${WORKDIR}/git"
 B = "${S}"
 
