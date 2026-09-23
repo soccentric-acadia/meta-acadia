@@ -24,7 +24,7 @@ SRC_URI = "git://github.com/soccentric-acadia/Acadia-Instrumentation.git;protoco
 # T-P04: bumped to develop HEAD for the webconfigd.service.d/instr-socket.conf
 # drop-in (SB-4 socket access) — this rev also carries StreamDeviceData, which
 # closes the pinned-rev gap called out by SB-4/T-P05 for the telemetry path.
-INSTR_SRCREV ?= "6f73cb7f27f9b0adfd6ab27a58c6e2e5f9ea5a63"
+INSTR_SRCREV ?= "8c38abe452a1112da95a955592079bc31769f645"
 SRCREV = "${INSTR_SRCREV}"
 S = "${WORKDIR}/git"
 
