@@ -1,9 +1,10 @@
 SUMMARY = "Provision the persistent /pst store partition (p4, label pst)"
 DESCRIPTION = "Mount unit for the LABEL=pst partition plus a one-shot service \
 that sets ownership (instr-istate:instr, setgid 2770) and per-spoke store \
-directories on the freshly mounted /pst before istate starts.  Devices \
-without the partition (old 4-partition layout) skip everything silently. \
-Task 003."
+directories on the freshly mounted /pst before istate starts, and provisions \
+/pst/webconfig for the WebConfig daemon's persistent store (T-P01, incl. the \
+one-time migration of pre-T-P01 state).  Devices without the partition (old \
+4-partition layout) skip everything silently.  Task 003."
 LICENSE     = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 

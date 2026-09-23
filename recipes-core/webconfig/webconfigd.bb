@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=3382002c026d2dcb5817068a8f184313"
 PV = "0.1.0+git${SRCPV}"
 # Follow the upstream repository's default branch.
 SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;branch=develop"
-SRCREV = "30887b5a9eca298417652c38b7f35ff30a3ceccc"  # X-009: pinned — a reproducible image build must not track a branch
+SRCREV = "8d4025f9699f0fab234cfa2395b5f15e9c2b1384"  # T-P01: /pst/webconfig data_dir + RequiresMountsFor=/pst service unit
 S = "${WORKDIR}/git"
 B = "${S}"
 
@@ -72,6 +72,11 @@ do_install:append() {
     install -m 0755 ${B}/target/${RUST_HOST_SYS}/release/webconfigd ${D}${bindir}/webconfigd
 
     install -d -o ${WEBCONFIG_USER} -g ${WEBCONFIG_GROUP} ${D}/var/lib/webconfig
+
+    # T-P01: the daemon's store moved to /pst/webconfig (data_dir resolves it
+    # there when the partition exists; acadia-pst-init.sh provisions ownership
+    # and migrates pre-T-P01 state). /var/lib/webconfig remains the account
+    # home and migration source.
 
     install -d ${D}${systemd_system_unitdir}
     install -m 0644 ${S}/meta-webconfig/recipes-core/webconfig/files/webconfigd.service \
