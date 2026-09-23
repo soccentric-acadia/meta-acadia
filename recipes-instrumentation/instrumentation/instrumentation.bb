@@ -21,7 +21,10 @@ SRC_URI = "git://github.com/soccentric-acadia/Acadia-Instrumentation.git;protoco
 #    (the bare target-name COMMAND gets rewritten by CMake to the target binary
 #    and would die with "Exec format error" on the build host)
 #  - the test suite honours -DBUILD_TESTING=OFF (no googletest dependency)
-INSTR_SRCREV ?= "3e885c2c72a0aa0746d1a913b02cf901bc736ed9"
+# T-P04: bumped to develop HEAD for the webconfigd.service.d/instr-socket.conf
+# drop-in (SB-4 socket access) — this rev also carries StreamDeviceData, which
+# closes the pinned-rev gap called out by SB-4/T-P05 for the telemetry path.
+INSTR_SRCREV ?= "6f73cb7f27f9b0adfd6ab27a58c6e2e5f9ea5a63"
 SRCREV = "${INSTR_SRCREV}"
 S = "${WORKDIR}/git"
 
@@ -87,6 +90,13 @@ do_install() {
     # System files shipped in the repo; daemon users come from sysusers.d at boot.
     install -d ${D}${systemd_unitdir}/system
     install -m 0644 ${S}/system/systemd/*.service ${D}${systemd_unitdir}/system/
+    # T-P04 (SB-4): webconfigd joins the shared instr group via this drop-in
+    # so istate's instr-configuration:instr-owned 0660 configuration socket is
+    # connectable. Shipped only with Instrumentation — cm5 (no istate) keeps
+    # webconfigd untouched.
+    install -d ${D}${systemd_unitdir}/system/webconfigd.service.d
+    install -m 0644 ${S}/system/systemd/webconfigd.service.d/instr-socket.conf \
+        ${D}${systemd_unitdir}/system/webconfigd.service.d/instr-socket.conf
     install -d ${D}${sysconfdir}/sysusers.d ${D}${nonarch_libdir}/tmpfiles.d
     install -m 0644 ${S}/system/sysusers.d/instrumentation.conf ${D}${sysconfdir}/sysusers.d/
     install -m 0644 ${S}/system/tmpfiles.d/instrumentation.conf ${D}${nonarch_libdir}/tmpfiles.d/
@@ -134,4 +144,4 @@ INSTR_BOARD ?= "rpi-5"
 INSTR_BOARD:raspberrypi4-64 = "rpi-4b"
 INSTR_BOARD:raspberrypi5 = "rpi-5"
 
-FILES:${PN} += "${sysusersdir} ${nonarch_libdir}/tmpfiles.d ${datadir}/instrumentation"
+FILES:${PN} += "${sysusersdir} ${nonarch_libdir}/tmpfiles.d ${datadir}/instrumentation ${systemd_unitdir}/system/webconfigd.service.d/"
