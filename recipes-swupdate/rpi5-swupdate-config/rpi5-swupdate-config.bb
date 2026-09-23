@@ -47,6 +47,12 @@ do_install() {
     install -d ${D}${sysconfdir}/swupdate
     install -m 0644 ${WORKDIR}/swupdate.cfg \
                     ${D}${sysconfdir}/swupdate/swupdate.cfg
+    # OS-010 (T-P06): the identify block is board data — give each supported
+    # machine its own name instead of shipping "rpi5" on every machine.
+    if [ "${MACHINE}" = "raspberrypi-cm5-io-board" ]; then
+        sed -i 's|name              = "rpi5"|name              = "cm5"|' \
+            ${D}${sysconfdir}/swupdate/swupdate.cfg
+    fi
 
     # A/B slot helper scripts (also shipped in .swu packages)
     install -d ${D}${libdir}/swupdate

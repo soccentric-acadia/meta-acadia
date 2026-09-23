@@ -66,6 +66,10 @@ IMAGE_INSTALL:append = " webconfigd webconfig-static webconfig-schemas webconfig
 # with "nothing provides instrumentation" via COMPATIBLE_MACHINE).
 IMAGE_INSTALL:append:raspberrypi4-64 = " instrumentation"
 IMAGE_INSTALL:append:raspberrypi5 = " instrumentation"
+# T-P06 (A07): CM5 ships Instrumentation too — the recipe's
+# COMPATIBLE_MACHINE now covers raspberrypi-cm5-io-board with the cm5
+# descriptor set (INSTR_BOARD=cm5), same BCM2712 peripheral set as the Pi 5.
+IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " instrumentation"
 
 # gRPC + Protobuf (NO compiler on device — M5)
 # Provided via packagegroup-acadia-middleware (feature.txt §6: "Middleware

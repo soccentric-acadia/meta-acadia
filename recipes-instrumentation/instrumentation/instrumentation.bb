@@ -137,11 +137,13 @@ SYSTEMD_SERVICE:${PN} = "instr-istate.service instr-networkd.service instr-monit
 SYSTEMD_AUTO_ENABLE = "enable"
 
 # Acadia-OS ships instrumentation on exactly these machines (acadia-image.bb
-# appends it per-machine); skip everywhere else.
-COMPATIBLE_MACHINE = "^(raspberrypi4-64|raspberrypi5)$"
+# appends it per-machine); skip everywhere else. cm5-io-board added by T-P06
+# (A07: CM5 ships Instrumentation too).
+COMPATIBLE_MACHINE = "^(raspberrypi4-64|raspberrypi5|raspberrypi-cm5-io-board)$"
 
 INSTR_BOARD ?= "rpi-5"
 INSTR_BOARD:raspberrypi4-64 = "rpi-4b"
 INSTR_BOARD:raspberrypi5 = "rpi-5"
+INSTR_BOARD:raspberrypi-cm5-io-board = "cm5"
 
 FILES:${PN} += "${sysusersdir} ${nonarch_libdir}/tmpfiles.d ${datadir}/instrumentation ${systemd_unitdir}/system/webconfigd.service.d/"
