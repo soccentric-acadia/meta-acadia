@@ -79,11 +79,24 @@ IMAGE_INSTALL:append = " packagegroup-acadia-middleware sudo"
 # package the D-Bus path denies everything for the non-root daemon.
 IMAGE_INSTALL:append = " polkit"
 
+# Required runtime binaries for shipped features (SB-3, T-P03; gate in the
+# Acadia-OS scripts/check-image-packages.sh REQUIRED_IMAGE_PACKAGES — keep
+# both in sync). Deferred per T-P00e, features hidden in v1: hostapd/dnsmasq
+# (AP mode), linuxptp (PTP), wireguard-tools (WireGuard) — package one and
+# add it to the gate in the same change.
+#   nftables           — firewall applier drives nft (P-F01)
+#   chrony             — GNSS time chain gpsd+chrony (P-D05)
+#   mosquitto-clients  — alert delivery via mosquitto_pub (P-I07)
+#   curl               — OTA/backup/HQ downloads (webconfigd shells out)
+#   ca-certificates    — TLS verification for those curl/HQ paths
+IMAGE_INSTALL:append = " nftables chrony mosquitto-clients curl ca-certificates"
+
 # Cloud/telemetry (feature.txt §6: "Cloud and telemetry package group
-# support"). packagegroup-acadia-cloud (mosquitto, chrony, curl) exists
-# but is NOT installed by default here — acadia-client (the cloud-facing
-# daemon) is likewise excluded pending an upstream repo. Deployments that
-# need cloud/telemetry connectivity should add
+# support"). packagegroup-acadia-cloud remains NOT installed as a group —
+# acadia-client (the cloud-facing daemon) is excluded pending an upstream
+# repo — but T-P03 now installs the runtime pieces shipped features need
+# directly (mosquitto-clients, chrony, curl, above), so the group only adds
+# the broker itself. Deployments needing the broker can still add
 # 'packagegroup-acadia-cloud' to IMAGE_INSTALL in their own image recipe.
 
 # Real-time diagnostics (task 002): rt-tests ships cyclictest / hackbench /
