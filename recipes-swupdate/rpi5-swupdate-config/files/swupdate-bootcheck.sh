@@ -69,11 +69,17 @@ wait_service() {
     return 0
 }
 
-# Health contract (task 47): the boot is only healthy when the required
-# services that must survive an update are actually up — HAL, webconfigd, and
-# the client — with bounded readiness. Networking and storage are validated
+# Health contract (task 47; T-P08): the boot is only healthy when the required
+# services that must survive an update are actually up — HAL, webconfigd and
+# instr-istate — with bounded readiness. Networking and storage are validated
 # separately below.
-for unit in hal.service webconfigd.service acadia-client.service; do
+# T-P08 (K04): acadia-client is CONDITIONAL on its provisioning — the Client
+# needs /etc/acadia/client.conf (OS-061), which is written only in IV&V
+# deployments; on an un-provisioned production unit requiring the daemon here
+# failed every boot and rolled back every update (SB-7). instr-istate is
+# added to the unconditional set: it is the image's core service wherever
+# Instrumentation is installed, and list-unit-files skips it elsewhere.
+for unit in hal.service webconfigd.service instr-istate.service; do
     if systemctl list-unit-files "${unit}" >/dev/null 2>&1; then
         if ! wait_service "${unit}"; then
             HEALTH_OK=false
@@ -81,6 +87,15 @@ for unit in hal.service webconfigd.service acadia-client.service; do
         fi
     fi
 done
+
+# T-P08: acadia-client only counts when the IV&V config is provisioned.
+if systemctl list-unit-files acadia-client.service >/dev/null 2>&1 \
+   && [[ -f /etc/acadia/client.conf ]]; then
+    if ! wait_service "acadia-client.service"; then
+        HEALTH_OK=false
+        logger -t swupdate-bootcheck "acadia-client failed readiness (bounded ${WAIT_MAX}s)"
+    fi
+fi
 
 # Networking: at least one non-loopback interface must be up once networkd
 # has had a chance (bounded). Required so a healthy update can actually be
