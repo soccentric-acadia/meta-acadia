@@ -30,7 +30,7 @@ SRCREV_client = "b702bdde638fc908ca225dee46f231158b7675eb"
 # The embedded HAL sibling pins the SAME Acadia-HAL revision as
 # acadia-hal_git.bb (T-P05: one HAL revision per build) — develop HEAD,
 # which now exists as a standalone recipe pin too (OS-034 resolved).
-SRCREV_hal = "3efdffe392978f44418ea0fcea179143435964ec"
+SRCREV_hal = "f6fb89e7d6325aad2d8c97db6bf44b02c3bd8987"
 
 # Required when multiple SCM fetchers are used (client + embedded HAL).
 SRCREV_FORMAT = "client_hal"
