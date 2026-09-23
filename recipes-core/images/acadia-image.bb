@@ -26,9 +26,10 @@ IMAGE_FEATURES += "ssh-server-openssh"
 # T-P14 (F12): the SWUpdate Mongoose web UI is removed from production —
 # plain-HTTP :8080 with a per-boot printed password is a duplicate OTA path
 # and an exposure (OS-006..008). Local OTA goes through WebConfig (K06);
-# remote OTA through HQ (K09). swupdate itself stays (install daemon).
-IMAGE_INSTALL:append:raspberrypi5 = " swupdate rpi5-swupdate-config"
-IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " swupdate rpi5-swupdate-config"
+# remote OTA through HQ (K09). swupdate itself stays (install daemon), plus
+# swupdate-client, which WebConfig uses to hand bundles to it (T-P26).
+IMAGE_INSTALL:append:raspberrypi5 = " swupdate swupdate-client rpi5-swupdate-config"
+IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " swupdate swupdate-client rpi5-swupdate-config"
 
 # Home partition init
 IMAGE_INSTALL:append = " rpi5-home-init"
@@ -224,10 +225,13 @@ IMAGE_FEATURES += "ptest-pkgs"
 # created on the persistent p5 (/home) partition by rpi5-home-init
 # on first boot.
 inherit extrausers
+# OS-072: base-passwd already ships an `operator` GROUP (gid 37), so the
+# operator user must join it (-g) — a plain useradd refuses to create a
+# same-named user group and do_rootfs fails.
 EXTRA_USERS_PARAMS = "\
     useradd -M -s /bin/bash -G sudo rpi; \
     usermod -L rpi; \
-    useradd -M -s /bin/bash -d /home/operator operator; \
+    useradd -M -s /bin/bash -d /home/operator -g operator operator; \
     usermod -L operator; \
 "
 

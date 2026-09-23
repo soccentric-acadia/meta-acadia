@@ -1,8 +1,8 @@
 SUMMARY     = "SWUpdate runtime configuration and A/B OTA helper scripts for RPi5"
 DESCRIPTION = "Installs swupdate.cfg, slot-detection / boot-slot scripts, a \
-               systemd drop-in that enables the Mongoose web UI on port 8080, \
-               boot-watchdog for rollback counter, health-check service, \
-               startup wrapper with optional signing + web UI auth."
+               systemd drop-in that starts the signed-install daemon through \
+               swupdate-start.sh (no web UI since T-P14), boot-watchdog for \
+               the rollback counter and the health-check service."
 LICENSE     = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 

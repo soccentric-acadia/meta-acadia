@@ -31,7 +31,9 @@ do_install() {
                     ${D}${systemd_system_unitdir}/acadia-firewall.service
 
     # sudoers drop-in (validated-syntax file; sudo reads /etc/sudoers.d/*).
-    install -d ${D}${sysconfdir}/sudoers.d
+    # OS-072: 0750 matches sudo-lib's own /etc/sudoers.d (RPM directory
+    # conflict otherwise).
+    install -d -m 0750 ${D}${sysconfdir}/sudoers.d
     install -m 0440 ${WORKDIR}/acadia-sudoers \
                     ${D}${sysconfdir}/sudoers.d/acadia
 }

@@ -18,7 +18,7 @@ SRC_URI = " \
 # (7184d94) predates the client-facing adapters the embedded-HAL sibling
 # already used and most verdict-integrity fixes (OS-034). Same rev as
 # acadia-client_git.bb's SRCREV_hal so exactly one HAL revision forms a build.
-f6fb89e7d6325aad2d8c97db6bf44b02c3bd8987
+SRCREV = "f6fb89e7d6325aad2d8c97db6bf44b02c3bd8987"
 
 PV = "1.0+git${SRCPV}"
 S = "${WORKDIR}/git"

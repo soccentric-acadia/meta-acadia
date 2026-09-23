@@ -7,7 +7,10 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=3382002c026d2dcb5817068a8f184313"
 PV = "0.1.0+git${SRCPV}"
 # Follow the upstream repository's default branch.
 SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;branch=develop"
-SRCREV = "80328cd6c0fbb16461f5b7cc3d14b60243ace761"  # T-P18: write applies + reports per-applier outcomes + auto-confirm (full sha in the release manifest, P-O02)
+# T-P26: SWUpdate install/confirm/rollback via the privileged helper
+# (full sha in the release manifest, P-O02). NOTE: keep comments on
+# their own line — BitBake cannot parse trailing '#' after an assignment.
+SRCREV = "a6aef7d37d104339353f65590912203046c879bd"
 S = "${WORKDIR}/git"
 B = "${S}"
 
@@ -20,7 +23,7 @@ inherit cargo pkgconfig systemd useradd
 # tarball gone (live crates.io build), nothing supplies it — provide the native
 # protobuf compiler and point prost-build at it explicitly, since PATH in
 # do_compile does not include ${STAGING_BINDIR_NATIVE}.
-DEPENDS += "protobuf-native"
+DEPENDS += "protobuf-native polkit"
 export PROTOC = "${STAGING_BINDIR_NATIVE}/protoc"
 
 CARGO_SRC_DIR = "${S}"
@@ -64,7 +67,9 @@ do_compile() {
 WEBCONFIG_USER = "webconfig"
 WEBCONFIG_GROUP = "webconfig"
 USERADD_PACKAGES = "${PN}"
-USERADD_PARAM:${PN} = "-r -M -d /var/lib/webconfig -s /usr/sbin/nologin -g ${WEBCONFIG_GROUP} ${WEBCONFIG_USER}"
+# polkitd is declared too (identical to polkit_124.bb) so do_install can
+# chown the rules.d directory to it (OS-072).
+USERADD_PARAM:${PN} = "-r -M -d /var/lib/webconfig -s /usr/sbin/nologin -g ${WEBCONFIG_GROUP} ${WEBCONFIG_USER}; --system --no-create-home --user-group --home-dir ${sysconfdir}/polkit-1 --shell /bin/nologin polkitd"
 GROUPADD_PARAM:${PN} = "-r ${WEBCONFIG_GROUP}"
 
 do_install:append() {
@@ -90,7 +95,11 @@ do_install:append() {
     install -m 0644 ${S}/meta-webconfig/recipes-core/webconfig/files/webconfigd.env \
         ${D}${sysconfdir}/default/webconfigd
 
-    install -d ${D}${datadir}/polkit-1/rules.d
+    # OS-072: the rules.d directory must match polkit's own packaging
+    # (0700 polkitd:root, polkit_124.bb) or RPM refuses the rootfs with a
+    # directory conflict — same pattern as oe's polkit-group-rule.inc.
+    install -m 0700 -d ${D}${datadir}/polkit-1/rules.d
+    chown polkitd:root ${D}${datadir}/polkit-1/rules.d
     install -m 0644 ${S}/meta-webconfig/recipes-core/webconfig/files/50-webconfigd.polkit.rules \
         ${D}${datadir}/polkit-1/rules.d/50-webconfigd.rules
 

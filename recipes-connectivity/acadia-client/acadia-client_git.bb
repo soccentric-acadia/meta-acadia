@@ -25,7 +25,9 @@ SRC_URI = " \
 # build must be reproducible; bump this pin when client changes are validated).
 # T-P05 (P-O02): pinned to develop HEAD — b702bdd carries CLI-355..357
 # (statement-use-after-free fixes, watchdog join, per-process test spools).
-SRCREV_client = "b702bdde638fc908ca225dee46f231158b7675eb"
+# OS-072: 6bf0411 fixes the fmt formatting of std::atomic / toml::key that
+# broke the aarch64 cross-compile.
+SRCREV_client = "6bf04119c826a3c276f9323d2b1361bfd65bd017"
 #
 # The embedded HAL sibling pins the SAME Acadia-HAL revision as
 # acadia-hal_git.bb (T-P05: one HAL revision per build) — develop HEAD,
