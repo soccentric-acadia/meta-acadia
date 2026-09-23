@@ -23,13 +23,14 @@ SRC_URI = " \
 
 # Client pinned (OS-028: the recipe is now in the production image, so the
 # build must be reproducible; bump this pin when client changes are validated).
-SRCREV_client = "a4670313f16708bb109ce66beeaa5dbc96ea684d"
+# T-P05 (P-O02): pinned to develop HEAD — b702bdd carries CLI-355..357
+# (statement-use-after-free fixes, watchdog join, per-process test spools).
+SRCREV_client = "b702bdde638fc908ca225dee46f231158b7675eb"
 #
-# The embedded HAL sibling pins the Acadia-HAL develop HEAD: the client's
-# develop adapters (fan_adapter, hdmi_adapter, …) link against HAL libs and
-# protos that only exist there (the acadia-hal_git.bb master pin predates
-# them).  Pinned — not AUTOREV — so client builds are reproducible.
-SRCREV_hal = "dca85207b3df2999c187e2727181f22f3c88736f"
+# The embedded HAL sibling pins the SAME Acadia-HAL revision as
+# acadia-hal_git.bb (T-P05: one HAL revision per build) — develop HEAD,
+# which now exists as a standalone recipe pin too (OS-034 resolved).
+SRCREV_hal = "3efdffe392978f44418ea0fcea179143435964ec"
 
 # Required when multiple SCM fetchers are used (client + embedded HAL).
 SRCREV_FORMAT = "client_hal"

@@ -10,13 +10,15 @@ LICENSE = "CLOSED"
 LIC_FILES_CHKSUM = "file://security.md;md5=1606e3c70e7eb33ddfd7fa686c3b5ff0"
 
 SRC_URI = " \
-    git://github.com/soccentric-acadia/Acadia-HAL.git;protocol=ssh;user=git;branch=master \
+    git://github.com/soccentric-acadia/Acadia-HAL.git;protocol=ssh;user=git;branch=develop \
     file://security.md \
 "
 # Pin the private upstream to avoid AUTOREV parse-time network lookups.
-# a385917 (May 30) was rebased upstream; master HEAD is 7184d94 (verified via
-# git ls-remote over ssh).
-SRCREV = "7184d94240c95ce6dc5eb679da0559cccd3bb819"
+# T-P05 (P-O02): moved to the single develop pin — the old master pin
+# (7184d94) predates the client-facing adapters the embedded-HAL sibling
+# already used and most verdict-integrity fixes (OS-034). Same rev as
+# acadia-client_git.bb's SRCREV_hal so exactly one HAL revision forms a build.
+SRCREV = "3efdffe392978f44418ea0fcea179143435964ec"
 
 PV = "1.0+git${SRCPV}"
 S = "${WORKDIR}/git"
