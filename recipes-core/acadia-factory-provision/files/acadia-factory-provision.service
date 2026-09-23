@@ -1,0 +1,19 @@
+[Unit]
+Description=Provision the factory identity record on /pst (T-P09)
+Documentation=file:///usr/lib/acadia-factory-provision/acadia-provision-identity.sh
+# Needs the persistent store mounted and its layout prepared (webconfig dir
+# for the claim-code mirror). One-shot at every boot: exits instantly when
+# the write-once record already exists.
+RequiresMountsFor=/pst
+After=acadia-pst-init.service local-fs.target
+Wants=acadia-pst-init.service
+# Without the partition (old layout) skip silently, like acadia-pst-init.
+ConditionPathExists=/dev/disk/by-label/pst
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/acadia-factory-provision/acadia-provision-identity.sh
+
+[Install]
+WantedBy=multi-user.target

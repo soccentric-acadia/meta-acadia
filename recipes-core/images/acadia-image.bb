@@ -37,6 +37,12 @@ IMAGE_INSTALL:append = " rpi5-home-init"
 IMAGE_INSTALL:append:raspberrypi5 = " acadia-pst-init"
 IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " acadia-pst-init"
 
+# Factory provisioning (T-P09, A02): one-shot identity writer for /pst +
+# line-station tool. Skipped silently on machines without the /pst
+# partition; a pre-existing record is never overwritten (write-once).
+IMAGE_INSTALL:append:raspberrypi5 = " acadia-factory-provision"
+IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " acadia-factory-provision"
+
 # Root filesystem expansion (feature.txt §3: "Optional root filesystem
 # expansion service for single-partition deployments"). rpi5/cm5 use the
 # fixed-size A/B WKS layout (sdimage-rpi5.wks) where the two rootfs slots
