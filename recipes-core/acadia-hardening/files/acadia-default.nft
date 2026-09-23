@@ -1,0 +1,31 @@
+table inet acadia {
+    # T-P14 (F01, OS-014): production default-deny firewall. The CFG firewall
+    # applier manages its own separate `inet webconfig` table (appliers/
+    # firewall.rs); this table is the image's baseline and is never written
+    # by appliers.
+    #
+    # Outbound is unrestricted (device→HQ AgentLink, NTP, DNS, alert delivery
+    # all egress). Inbound is default-deny with explicit accepts:
+    #   lo, established/related, ICMP(+v6 ND), sshd 22, WebConfig 8443.
+    # The WebConfig UI port is never blocked — the firewall applier's own
+    # contract (spec §4.5). DHCP/NTP replies ride conntrack (established).
+
+    chain input {
+        type filter hook input priority 0; policy drop;
+        iifname "lo" accept
+        ct state established,related accept
+        ip protocol icmp accept
+        ip6 nexthdr ipv6-icmp accept
+        tcp dport 22 accept comment "sshd"
+        tcp dport 8443 accept comment "webconfig UI (never blocked)"
+        # UDP 5353 (mDNS) is intentionally not opened: no mDNS is shipped.
+    }
+
+    chain output {
+        type filter hook output priority 0; policy accept;
+    }
+
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+    }
+}

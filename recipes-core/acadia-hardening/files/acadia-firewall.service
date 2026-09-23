@@ -1,0 +1,18 @@
+[Unit]
+Description=Acadia default-deny firewall baseline (T-P14, F01)
+Documentation=file:///usr/lib/acadia-hardening/acadia-default.nft
+# Apply before the network is declared online; the CFG firewall applier's
+# separate `inet webconfig` table merges with this baseline (nftables tables
+# are additive).
+Wants=network-pre.target
+Before=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /usr/lib/acadia-hardening/acadia-default.nft
+# Defensive: if nftables is absent the device still boots (log it loudly).
+ConditionPathExists=/usr/sbin/nft
+
+[Install]
+WantedBy=multi-user.target

@@ -23,8 +23,12 @@ IMAGE_FEATURES += "ssh-server-openssh"
 # rpi5-swupdate-config implements the inactive-slot, boot-selection, and
 # rollback flow for sdimage-rpi5.wks. Do not install it on single-rootfs
 # machines, where its /dev/swupdate-inactive contract cannot be satisfied.
-IMAGE_INSTALL:append:raspberrypi5 = " swupdate swupdate-www rpi5-swupdate-config"
-IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " swupdate swupdate-www rpi5-swupdate-config"
+# T-P14 (F12): the SWUpdate Mongoose web UI is removed from production —
+# plain-HTTP :8080 with a per-boot printed password is a duplicate OTA path
+# and an exposure (OS-006..008). Local OTA goes through WebConfig (K06);
+# remote OTA through HQ (K09). swupdate itself stays (install daemon).
+IMAGE_INSTALL:append:raspberrypi5 = " swupdate rpi5-swupdate-config"
+IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " swupdate rpi5-swupdate-config"
 
 # Home partition init
 IMAGE_INSTALL:append = " rpi5-home-init"
@@ -108,6 +112,10 @@ IMAGE_INSTALL:append = " nftables chrony mosquitto-clients curl ca-certificates"
 # directly (mosquitto-clients, chrony, curl, above), so the group only adds
 # the broker itself. Deployments needing the broker can still add
 # 'packagegroup-acadia-cloud' to IMAGE_INSTALL in their own image recipe.
+
+# Production hardening baseline (T-P14): default-deny nftables (F01),
+# sudo policy drop-in (OS-013), console policy documentation (F04).
+IMAGE_INSTALL:append = " acadia-hardening"
 
 # Real-time diagnostics (task 002): rt-tests ships cyclictest / hackbench /
 # hwlatdetect for scheduling-latency measurement on the PREEMPT_RT kernel.

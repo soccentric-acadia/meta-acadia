@@ -149,7 +149,7 @@ meta/meta-acadia/
             ├── post-install.sh        Installed to /usr/lib/swupdate/ on target
             ├── swupdate-bootcheck.sh  Boot-slot logger (runs at sysinit)
             ├── swupdate-bootcheck.service
-            └── swupdate-webui.conf    systemd drop-in for swupdate.service
+            └── swupdate-webui.conf    systemd drop-in for swupdate.service (T-P14: web UI removed — the drop-in only swaps ExecStart to the signed-install wrapper)
                                        (enables Mongoose web server on :8080)
 ```
 
@@ -200,7 +200,7 @@ The output is written to `build/rpi5-<version>.swu`.
 
 1. Find the device IP: `ping raspberrypi5.local` or check your router DHCP leases.
 2. Open `http://<device-ip>:8080` in a browser.
-3. The SWUpdate React front-end (`swupdate-www`) loads.
+3. ~~The SWUpdate React front-end (`swupdate-www`) loads.~~ **Removed in T-P14 (F12):** the plain-HTTP web UI is not shipped in production; use WebConfig (K06) or HQ (K09).
 4. Drag-and-drop `build/rpi5-<version>.swu` onto the upload area, or click
    **Select file** and choose it.
 5. Click **Start update**.
@@ -240,7 +240,7 @@ curl -X POST http://<device-ip>:8080/upload \
 
 The built-in web interface is served by the Mongoose HTTP server embedded in
 `swupdate` (enabled via `PACKAGECONFIG += "webserver"`). The React front-end
-(`swupdate-www`) is served from `/usr/share/swupdate/www/`.
+~~(`swupdate-www`) is served from `/usr/share/swupdate/www/`.~~ Removed from production in T-P14 (F12).
 
 | URL | Description |
 |-----|-------------|
@@ -431,5 +431,5 @@ Rebuild and deploy the device image with the cert baked in.
 | Device boots old slot after update | `post-install.sh` failed to edit `cmdline.txt` | Check `journalctl -u swupdate`; verify `/boot` was mounted rw |
 | `do_package` error about `swupdate.service` | Recipe listed foreign unit in `SYSTEMD_SERVICE` | Only list units installed by the recipe itself |
 | `cpio: File ... truncated` | `.swu` built with wrong order | `sw-description` must be the **first** file in the archive |
-| `swupdate-client: connection refused` | Wrong port or firewall | Default port is `8080`; check `swupdate-webui.conf` |
+| `swupdate-client: connection refused` | Web UI removed (T-P14/F12) | Local OTA goes through WebConfig or the signed-install daemon; there is no :8080 listener |
 | `pre-install.sh: unexpected active device` | Running from non-mmcblk0 media (USB boot) | Edit `pre-install.sh` device paths to match your setup |

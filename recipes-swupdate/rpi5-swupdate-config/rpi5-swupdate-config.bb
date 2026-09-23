@@ -13,12 +13,9 @@ SRC_URI = " \
     file://reboot-tryboot.sh \
     file://swupdate-bootcheck.sh \
     file://swupdate-bootcheck.service \
-    file://swupdate-webui.conf \
     file://boot-watchdog.sh \
     file://boot-watchdog.service \
     file://swupdate-start.sh \
-    file://swupdate-webui-auth-init.sh \
-    file://swupdate-webui-auth-init.service \
     file://bootcount-reset.sh \
     file://bootcount-reset.service \
     file://fw_env.config \
@@ -32,15 +29,13 @@ inherit systemd
 SYSTEMD_SERVICE:${PN} = " \
     swupdate-bootcheck.service \
     boot-watchdog.service \
-    swupdate-webui-auth-init.service \
     bootcount-reset.service \
 "
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
 # swupdate and bash are required at runtime; util-linux provides findmnt/blkid;
-# openssl is needed by swupdate-webui-auth-init.sh for password generation;
 # libubootenv provides fw_setenv/fw_printenv for U-Boot env OTA confirmation.
-RDEPENDS:${PN} = "swupdate bash util-linux openssl libubootenv"
+RDEPENDS:${PN} = "swupdate bash util-linux libubootenv"
 
 do_install() {
     # swupdate main config
@@ -80,22 +75,17 @@ do_install() {
     install -m 0755 ${WORKDIR}/swupdate-start.sh \
                     ${D}${sbindir}/swupdate-start.sh
 
-    # First-boot credential generator (I7)
-    install -m 0755 ${WORKDIR}/swupdate-webui-auth-init.sh \
-                    ${D}${sbindir}/swupdate-webui-auth-init.sh
-
     # systemd units
     install -d ${D}${systemd_system_unitdir}
     install -m 0644 ${WORKDIR}/swupdate-bootcheck.service \
                     ${D}${systemd_system_unitdir}/swupdate-bootcheck.service
     install -m 0644 ${WORKDIR}/boot-watchdog.service \
                     ${D}${systemd_system_unitdir}/boot-watchdog.service
-    install -m 0644 ${WORKDIR}/swupdate-webui-auth-init.service \
-                    ${D}${systemd_system_unitdir}/swupdate-webui-auth-init.service
     install -m 0644 ${WORKDIR}/bootcount-reset.service \
                     ${D}${systemd_system_unitdir}/bootcount-reset.service
 
-    # Drop-in: replace ExecStart with swupdate-start.sh wrapper
+    # Drop-in: replace ExecStart with swupdate-start.sh wrapper (F12: the
+    # web UI is gone; the wrapper keeps the signed-install contract)
     install -d ${D}${systemd_system_unitdir}/swupdate.service.d
     install -m 0644 ${WORKDIR}/swupdate-webui.conf \
                     ${D}${systemd_system_unitdir}/swupdate.service.d/webui.conf
@@ -113,10 +103,8 @@ FILES:${PN} += " \
     ${libdir}/swupdate/ \
     ${sbindir}/boot-watchdog.sh \
     ${sbindir}/swupdate-start.sh \
-    ${sbindir}/swupdate-webui-auth-init.sh \
     ${systemd_system_unitdir}/swupdate-bootcheck.service \
     ${systemd_system_unitdir}/boot-watchdog.service \
-    ${systemd_system_unitdir}/swupdate-webui-auth-init.service \
     ${systemd_system_unitdir}/bootcount-reset.service \
     ${systemd_system_unitdir}/swupdate.service.d/ \
     ${sysconfdir}/swupdate/swupdate-public.pem \

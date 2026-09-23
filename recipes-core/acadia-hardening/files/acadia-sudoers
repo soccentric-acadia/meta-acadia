@@ -1,0 +1,13 @@
+# T-P14 (OS-013): Acadia sudo policy.
+#
+#   - sudo requires a per-device password (accounts ship LOCKED; credentials
+#     are provisioned at first use, T-P11) — no NOPASSWD anywhere.
+#   - every sudo command is logged with the invoking tty and command.
+#   - use_pty so the sudo session is auditable via the journal.
+Defaults use_pty
+Defaults logfile=/var/log/sudo.log
+Defaults syslog=auth
+
+# The admin group (rpi is its only initial member; operator joins at
+# provisioning). Password required.
+%sudo ALL=(ALL:ALL) ALL
