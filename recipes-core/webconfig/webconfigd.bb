@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=3382002c026d2dcb5817068a8f184313"
 PV = "0.1.0+git${SRCPV}"
 # Follow the upstream repository's default branch.
 SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;branch=develop"
-SRCREV = "a0bf91ce3a446c46dbfd0efd3d793e271c2bc5f1"  # T-P04: webconfigd SupplementaryGroups=systemd-journal (full sha in the release manifest, P-O02)
+SRCREV = "bd742de859fd9ee6df2b03cf547748757a168384"  # T-P11: operator authorized_keys + ssh_keys.set command (full sha in the release manifest, P-O02)
 S = "${WORKDIR}/git"
 B = "${S}"
 

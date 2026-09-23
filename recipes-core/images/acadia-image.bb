@@ -205,19 +205,21 @@ IMAGE_FEATURES += "ptest-pkgs"
 # create /home/rpi on the volatile rootfs, which is then hidden
 # by the persistent mount at /home.
 #
-# acaida login account — LOCKED (no password, no SSH password auth).
-# OS-001: a hard-coded, fleet-wide password (fixed salt, same hash on every
-# shipped image) was removed — any holder of the audit file could log in to
-# every device. Per-device credentials are provisioned at first use
-# (task 007); until then the account is disabled like the rpi account.
-# Same -M reasoning as above: /home/acaida is recorded in /etc/passwd and
-# created on the persistent p4 (/home) partition by rpi5-home-init
+# operator login account (T-P11/B03, renames the mis-spelled `acaida`,
+# OS-004) — LOCKED until first use. SSH access for it is key-only
+# (acadia-hardening.conf: AllowUsers rpi operator, PasswordAuthentication
+# no); keys are provisioned by the T-P11 HQ command / WebConfig SSH page
+# into /home/operator/.ssh/authorized_keys (webconfig-applyd chowns them
+# operator:operator). Per-device credentials are provisioned at first use
+# (T-P11); until then the account stays disabled like the rpi account.
+# Same -M reasoning as above: /home/operator is recorded in /etc/passwd and
+# created on the persistent p5 (/home) partition by rpi5-home-init
 # on first boot.
 inherit extrausers
 EXTRA_USERS_PARAMS = "\
     useradd -M -s /bin/bash -G sudo rpi; \
     usermod -L rpi; \
-    useradd -M -s /bin/bash -d /home/acaida acaida; \
-    usermod -L acaida; \
+    useradd -M -s /bin/bash -d /home/operator operator; \
+    usermod -L operator; \
 "
 
