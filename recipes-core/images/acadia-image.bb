@@ -72,6 +72,13 @@ IMAGE_INSTALL:append:raspberrypi5 = " instrumentation"
 # package group support") instead of an individual package list.
 IMAGE_INSTALL:append = " packagegroup-acadia-middleware sudo"
 
+# polkit (SB-2, T-P02): the zbus service-control path (webconfigd's Services
+# page start/stop/restart) is authorized by the shipped
+# 50-webconfigd.polkit.rules; every other privileged applier op routes
+# through the webconfig-applyd root helper (no polkit involved). Without the
+# package the D-Bus path denies everything for the non-root daemon.
+IMAGE_INSTALL:append = " polkit"
+
 # Cloud/telemetry (feature.txt §6: "Cloud and telemetry package group
 # support"). packagegroup-acadia-cloud (mosquitto, chrony, curl) exists
 # but is NOT installed by default here — acadia-client (the cloud-facing

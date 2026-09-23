@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=3382002c026d2dcb5817068a8f184313"
 PV = "0.1.0+git${SRCPV}"
 # Follow the upstream repository's default branch.
 SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;branch=develop"
-SRCREV = "8d4025f9699f0fab234cfa2395b5f15e9c2b1384"  # T-P01: /pst/webconfig data_dir + RequiresMountsFor=/pst service unit
+SRCREV = "9fe5a2d2d7e83193487f11be59cd5fbe6fee6f64"  # T-P02: webconfig-applyd root helper + extended polkit rule (full sha in the release manifest, P-O02)
 S = "${WORKDIR}/git"
 B = "${S}"
 
@@ -81,6 +81,11 @@ do_install:append() {
     install -d ${D}${systemd_system_unitdir}
     install -m 0644 ${S}/meta-webconfig/recipes-core/webconfig/files/webconfigd.service \
         ${D}${systemd_system_unitdir}/webconfigd.service
+    # T-P02: the root privileged-apply helper (fixed-verb UDS) + its unit.
+    install -m 0755 ${B}/target/${RUST_HOST_SYS}/release/webconfig-applyd \
+        ${D}${bindir}/webconfig-applyd
+    install -m 0644 ${S}/meta-webconfig/recipes-core/webconfig/files/webconfig-applyd.service \
+        ${D}${systemd_system_unitdir}/webconfig-applyd.service
     install -d ${D}${sysconfdir}/default
     install -m 0644 ${S}/meta-webconfig/recipes-core/webconfig/files/webconfigd.env \
         ${D}${sysconfdir}/default/webconfigd
@@ -102,17 +107,17 @@ do_install:append() {
         ${D}/usr/share/webconfig/board-manifest.json
 }
 
-SYSTEMD_SERVICE:${PN} = "webconfigd.service"
+SYSTEMD_SERVICE:${PN} = "webconfigd.service webconfig-applyd.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
-RDEPENDS:${PN} = "ca-certificates"
+RDEPENDS:${PN} = "ca-certificates polkit"
 RRECOMMENDS:${PN} = "systemd"
 
 # The release profile (Cargo.toml, spec §2) mandates strip = "symbols" for size,
 # so the produced binary is already stripped — opt out of Yocto's QA re-strip check.
 INSANE_SKIP:${PN} = "already-stripped"
 
-FILES:${PN} = "${bindir}/webconfigd /var/lib/webconfig ${systemd_system_unitdir}/webconfigd.service ${sysconfdir}/default/webconfigd ${datadir}/polkit-1/rules.d/50-webconfigd.rules /usr/local/bin/pico-flash"
+FILES:${PN} = "${bindir}/webconfigd ${bindir}/webconfig-applyd /var/lib/webconfig ${systemd_system_unitdir}/webconfigd.service ${systemd_system_unitdir}/webconfig-applyd.service ${sysconfdir}/default/webconfigd ${datadir}/polkit-1/rules.d/50-webconfigd.rules /usr/local/bin/pico-flash"
 FILES:webconfig-static = "/usr/share/webconfig/static"
 FILES:webconfig-schemas = "/usr/share/webconfig/schemas"
 FILES:webconfig-manifest = "/usr/share/webconfig/board-manifest.json"
