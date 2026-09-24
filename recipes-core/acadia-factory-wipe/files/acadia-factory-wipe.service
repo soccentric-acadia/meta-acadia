@@ -1,0 +1,25 @@
+[Unit]
+Description=Carry out a requested factory reset before any service starts (T-P33)
+Documentation=file:///usr/lib/acadia-factory-wipe/acadia-factory-wipe.sh
+# Early boot, after the persistent partitions are mounted and BEFORE every
+# consumer of them — including the units that recreate their layout
+# (acadia-pst-init, rpi5-home-init, acadia-data-init), so a wiped tree is
+# re-provisioned in the same boot.
+DefaultDependencies=no
+RequiresMountsFor=/pst /home
+After=local-fs.target
+Before=sysinit.target systemd-tmpfiles-setup.service systemd-journal-flush.service
+Before=acadia-pst-init.service rpi5-home-init.service acadia-data-init.service
+Before=var-lib-acadia.mount acadia-factory-provision.service
+Before=webconfigd.service webconfig-applyd.service instr-istate.service
+Before=acadia-client.service sshd.socket
+Conflicts=shutdown.target
+ConditionPathExists=/pst/webconfig/factory-wipe.request
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/acadia-factory-wipe/acadia-factory-wipe.sh
+
+[Install]
+WantedBy=sysinit.target

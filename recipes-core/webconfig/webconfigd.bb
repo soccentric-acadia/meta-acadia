@@ -11,7 +11,7 @@ SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=
 # camera, rsyslog forwarding (see Task/integration-production.md).
 # (full sha in the release manifest, P-O02). NOTE: keep comments on
 # their own line — BitBake cannot parse trailing '#' after an assignment.
-SRCREV = "b9aa69c0694f00c8305075653f9538d6f182a49c"
+SRCREV = "1063cace0cb1a723c894a04b52bc0e113d14a881"
 S = "${WORKDIR}/git"
 B = "${S}"
 

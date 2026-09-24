@@ -2,13 +2,18 @@
 Description=Acadia Client — gRPC daemon for IV&V hardware validation
 After=network-online.target var-lib-acadia.mount
 Wants=network-online.target var-lib-acadia.mount
+# P-A10: the IV&V server is provisioned on first use (WebConfig
+# Provisioning page -> /var/lib/acadia/client.conf, which lives on the
+# persistent /home partition). Until then the unit is skipped, not failed;
+# WebConfig restarts it after provisioning.
+ConditionPathExists=/var/lib/acadia/client.conf
 
 [Service]
 Type=simple
 User=acadia
 Group=acadia
 WorkingDirectory=/var/lib/acadia
-ExecStart=/usr/bin/acadia-client
+ExecStart=/usr/bin/acadia-client --config /var/lib/acadia/client.conf
 Restart=on-failure
 RestartSec=5
 StartLimitIntervalSec=60

@@ -47,6 +47,10 @@ IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " acadia-pst-init"
 # partition; a pre-existing record is never overwritten (write-once).
 IMAGE_INSTALL:append:raspberrypi5 = " acadia-factory-provision"
 IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " acadia-factory-provision"
+# T-P33 (C06/C07): boot-time factory reset executor — needs the /pst + /home
+# layout, so it ships wherever acadia-pst-init does.
+IMAGE_INSTALL:append:raspberrypi5 = " acadia-factory-wipe"
+IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " acadia-factory-wipe"
 
 # Root filesystem expansion (feature.txt §3: "Optional root filesystem
 # expansion service for single-partition deployments"). rpi5/cm5 use the
@@ -68,6 +72,9 @@ IMAGE_INSTALL:append = " \
 # WebConfig application: the recipe fetches and builds Acadia-Configuration,
 # then installs its daemon, UI, schemas, and board manifest.
 IMAGE_INSTALL:append = " webconfigd webconfig-static webconfig-schemas webconfig-manifest"
+# P-A10/OS-071: optional fleet HQ CA + config-signing key (empty package
+# unless ACADIA_HQ_CA_FILE / ACADIA_HQ_CONFIG_PUBKEY_FILE are set).
+IMAGE_INSTALL:append = " acadia-hq-trust"
 
 # Instrumentation: the recipe fetches and builds Acadia-Instrumentation, then
 # installs the istate hub and its nine spokes. Its INSTR_BOARD mapping (and

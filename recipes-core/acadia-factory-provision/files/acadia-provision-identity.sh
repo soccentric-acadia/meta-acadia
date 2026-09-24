@@ -52,8 +52,26 @@ BASE="${ROOT:-}/pst/factory/identity"
 
 log() { logger -t acadia-provision-identity "$*"; }
 
+WC_DIR="${ROOT:-}/pst/webconfig"
+
+# T-P33: the claim-code mirror must exist whenever the record does. A
+# settings+users or full (RMA) factory reset reopens first-boot; without the
+# mirror first-boot would be claimable by anyone on the network instead of
+# by whoever holds the label. Re-mirrored from the write-once record.
+remirror_claim_code() {
+    [[ -d "${WC_DIR}" && ! -f "${WC_DIR}/claim-code" ]] || return 0
+    local code
+    code="$(sed -n 's/^claim_code:[[:space:]]*//p' "${BASE}/identity.yaml" | head -n1)"
+    [[ -n "${code}" ]] || return 0
+    printf '%s' "${code}" > "${WC_DIR}/claim-code"
+    chmod 0600 "${WC_DIR}/claim-code"
+    chown webconfig:webconfig "${WC_DIR}/claim-code" 2>/dev/null || true
+    log "claim-code mirror restored in ${WC_DIR}"
+}
+
 # ── existing record? ────────────────────────────────────────────────────────
 if [[ -f "${BASE}/identity.yaml" && -f "${BASE}/.secret" && "$PRINT_ONLY" == 0 && "$FORCE" == 0 ]]; then
+    remirror_claim_code
     log "identity already present at ${BASE} — write-once, nothing to do"
     exit 0
 fi
@@ -119,7 +137,6 @@ chmod 0640 "${BASE}/.secret"
 chown root:instr "${BASE}/.secret" 2>/dev/null || true
 
 # Claim-code mirror for the first-boot admin claim (T-P10).
-WC_DIR="${ROOT:-}/pst/webconfig"
 if [[ -d "$WC_DIR" ]]; then
     printf '%s' "$CLAIM" > "${WC_DIR}/claim-code"
     chmod 0600 "${WC_DIR}/claim-code"

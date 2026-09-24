@@ -9,6 +9,7 @@ of each newly written slot where their conditions hold.
 | Unit | Recipe | What it does | Ordering |
 |---|---|---|---|
 | `expand-rootfs.service` | `recipes-support/expand-rootfs` | Grows the last partition (`/home`) to fill the card; guarded by `ConditionPathExists=!/var/lib/expand-rootfs-done` so it runs once. | `DefaultDependencies=no`, `After=local-fs.target`, `Before=sysinit.target` |
+| `acadia-factory-wipe.service` | `recipes-core/acadia-factory-wipe` | Carries out a requested factory reset (`/pst/webconfig/factory-wipe.request`, level `settings` or `full`) before any consumer starts; see `factory-reset.md` (T-P33). Skipped when no request exists. | `DefaultDependencies=no`, `RequiresMountsFor=/pst /home`, `Before=sysinit.target` and every `/pst`/`/home` consumer and layout re-creator |
 | `rpi5-home-init.service` | `recipes-core/rpi5-home-init` | Initialises the persistent `/home` partition (issue #109: `RequiresMountsFor=/home`, so it waits for the mount itself, not just `local-fs.target`). | `After=local-fs.target`, `Before=getty.target sshd.service` |
 | `acadia-data-init.service` | `recipes-core/acadia-data-init` | Creates `/home/acadia` (owner `acadia`, mode 0750) on the persistent partition. `var-lib-acadia.mount` then bind-mounts `/home/acadia` onto `/var/lib/acadia`, so the Client's identity, spool and results survive OTA slot switches (issue #114). | `After=local-fs.target rpi5-home-init.service`, `Before=var-lib-acadia.mount acadia-client.service` |
 
