@@ -10,9 +10,6 @@ SRC_URI = " \
     file://thermal-check.sh \
     file://thermal-check.service \
     file://thermal-check.timer \
-    file://fan-control.sh \
-    file://fan-control.service \
-    file://fan-control.timer \
     file://rtc-sync.sh \
     file://rtc-sync.service \
     file://rtc-sync-shutdown.service \
@@ -37,8 +34,6 @@ SYSTEMD_SERVICE:${PN} = " \
     disk-usage-check.timer \
     thermal-check.service \
     thermal-check.timer \
-    fan-control.service \
-    fan-control.timer \
     rtc-sync.service \
     rtc-sync-shutdown.service \
 "
@@ -50,8 +45,6 @@ do_install() {
                     ${D}${sbindir}/disk-usage-check.sh
     install -m 0755 ${WORKDIR}/thermal-check.sh \
                     ${D}${sbindir}/thermal-check.sh
-    install -m 0755 ${WORKDIR}/fan-control.sh \
-                    ${D}${sbindir}/fan-control.sh
     install -m 0755 ${WORKDIR}/rtc-sync.sh \
                     ${D}${sbindir}/rtc-sync.sh
 
@@ -80,10 +73,6 @@ do_install() {
                     ${D}${systemd_system_unitdir}/thermal-check.service
     install -m 0644 ${WORKDIR}/thermal-check.timer \
                     ${D}${systemd_system_unitdir}/thermal-check.timer
-    install -m 0644 ${WORKDIR}/fan-control.service \
-                    ${D}${systemd_system_unitdir}/fan-control.service
-    install -m 0644 ${WORKDIR}/fan-control.timer \
-                    ${D}${systemd_system_unitdir}/fan-control.timer
     install -m 0644 ${WORKDIR}/rtc-sync.service \
                     ${D}${systemd_system_unitdir}/rtc-sync.service
     install -m 0644 ${WORKDIR}/rtc-sync-shutdown.service \
@@ -93,7 +82,6 @@ do_install() {
 FILES:${PN} = " \
     ${sbindir}/disk-usage-check.sh \
     ${sbindir}/thermal-check.sh \
-    ${sbindir}/fan-control.sh \
     ${sbindir}/rtc-sync.sh \
     ${sysconfdir}/acadia/watchdog.conf \
     ${systemd_system_unitdir}/watchdog.service.d/acadia.conf \
@@ -103,8 +91,6 @@ FILES:${PN} = " \
     ${systemd_system_unitdir}/disk-usage-check.timer \
     ${systemd_system_unitdir}/thermal-check.service \
     ${systemd_system_unitdir}/thermal-check.timer \
-    ${systemd_system_unitdir}/fan-control.service \
-    ${systemd_system_unitdir}/fan-control.timer \
     ${systemd_system_unitdir}/rtc-sync.service \
     ${systemd_system_unitdir}/rtc-sync-shutdown.service \
 "

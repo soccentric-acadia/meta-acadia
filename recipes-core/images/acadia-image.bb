@@ -86,6 +86,9 @@ IMAGE_INSTALL:append:raspberrypi-cm5-io-board = " instrumentation"
 # Provided via packagegroup-acadia-middleware (feature.txt §6: "Middleware
 # package group support") instead of an individual package list.
 IMAGE_INSTALL:append = " packagegroup-acadia-middleware sudo"
+# T-P29 (J03): remote syslog transport for WebConfig (forward-only config,
+# recipes-extended/rsyslog bbappend).
+IMAGE_INSTALL:append = " rsyslog"
 
 # polkit (SB-2, T-P02): the zbus service-control path (webconfigd's Services
 # page start/stop/restart) is authorized by the shipped
@@ -173,10 +176,9 @@ IMAGE_INSTALL:append = " \
 "
 
 # ── Power / Thermal (task.md Power-Thermal) ─────────────────────────────────
-# lm-sensors for sensor inspection. Fan control is provided by the
-# platform-native fan-control service in acadia-services, avoiding a
-# machine-specific fancontrol package split that is not available in the
-# pinned OpenEmbedded layer set.
+# lm-sensors for sensor inspection. Fan control is kernel-owned (T-P30,
+# OS-052/053): the bcm2712 cooling-fan thermal trips are set with fan_temp*
+# dtparams in kas/common.yaml — no userspace loop fighting the governor.
 IMAGE_INSTALL:append = " lmsensors"
 
 # ── Storage / Boot (task.md Storage-Boot) ───────────────────────────────────

@@ -1,14 +1,16 @@
 #!/bin/sh
-# rtc-sync.sh — sync the system clock with the battery-backed RTC.
+# rtc-sync.sh — keep the system clock and the battery-backed RTC in step.
 #
 # The i2c-rtc overlay (dtoverlay=i2c-rtc,pcf8523 in kas/common.yaml)
-# exposes a battery-backed RTC as /dev/rtc0.  This script:
-#   * on boot  (mode=read):  if the system clock is invalid (before the
-#     kernel build epoch), set it from the RTC so timestamps are accurate
-#     even when offline (relevant since chrony is only in the optional
-#     cloud packagegroup).
-#   * on shutdown (mode=write): write the current system time to the RTC
-#     so it survives power-off.
+# exposes the RTC as /dev/rtc0 (its driver is a module, so the kernel's
+# RTC_HCTOSYS does not run for it).
+#   * boot (read):      unless NTP/PTP/GNSS already synchronised the clock,
+#     load the time from the RTC. T-P30 (OS-055): the old "only if before
+#     2020" test never fired — systemd already moves the clock to the build
+#     epoch — so the RTC was never read and an offline unit booted with the
+#     build date.
+#   * shutdown (write): save the time to the RTC only when the clock is
+#     synchronised, so a wrong clock never overwrites a good RTC.
 #
 # Usage: rtc-sync.sh read|write
 
@@ -21,20 +23,28 @@ if [ ! -e "${RTC_DEV}" ]; then
     exit 0
 fi
 
+synchronized() {
+    [ "$(timedatectl show --property=NTPSynchronized --value 2>/dev/null)" = "yes" ]
+}
+
 case "${MODE}" in
     read)
-        # If the system clock is before the kernel build epoch, it is
-        # invalid — pull the time from the RTC.
-        NOW=$(date +%s 2>/dev/null || echo 0)
-        if [ "${NOW}" -lt 1600000000 ]; then
-            hwclock -r -f "${RTC_DEV}" 2>/dev/null \
-                && hwclock -s -f "${RTC_DEV}" 2>/dev/null \
+        if synchronized; then
+            logger -t rtc-sync "clock already synchronised; RTC not read" || true
+        elif hwclock -r -f "${RTC_DEV}" >/dev/null 2>&1; then
+            hwclock -s -f "${RTC_DEV}" \
                 && logger -t rtc-sync "system clock set from RTC" || true
+        else
+            logger -t rtc-sync -p user.warning "RTC unreadable (battery?)" || true
         fi
         ;;
     write)
-        hwclock -w -f "${RTC_DEV}" 2>/dev/null \
-            && logger -t rtc-sync "system time written to RTC" || true
+        if synchronized; then
+            hwclock -w -f "${RTC_DEV}" \
+                && logger -t rtc-sync "system time written to RTC" || true
+        else
+            logger -t rtc-sync "clock not synchronised; RTC left unchanged" || true
+        fi
         ;;
     *)
         echo "usage: rtc-sync.sh read|write" >&2

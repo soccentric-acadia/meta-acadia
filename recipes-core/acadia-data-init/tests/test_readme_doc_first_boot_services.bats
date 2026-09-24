@@ -16,8 +16,10 @@
 #     separate /var/lib/acadia mount but has no idea why).
 
 setup() {
-    SUT="${BATS_TEST_DIRNAME}/../../../../../README.md"
-    [ -f "${SUT}" ] || skip "README.md not found at ${SUT}"
+    # The Acadia-OS README was cleared (fc26467); the first-boot services
+    # documentation now lives in the layer: docs/first-boot-services.md.
+    SUT="${BATS_TEST_DIRNAME}/../../../docs/first-boot-services.md"
+    [ -f "${SUT}" ] || { echo "missing ${SUT}" >&2; return 1; }
 }
 
 # --- Header: "Three" not "Two" ------------------------------------------

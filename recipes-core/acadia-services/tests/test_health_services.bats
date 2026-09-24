@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 # test_health_services.bats — regression test for the thermal-check,
-# fan-control, rtc-sync, and hardware-watchdog units added to
+# rtc-sync and hardware-watchdog units (fan control is kernel-owned, T-P30) added to
 # acadia-services during the task.md hardware-enablement pass.
 
 setup() {
@@ -22,15 +22,10 @@ setup() {
     grep -qF 'OnUnitActiveSec=5min' "${FILES}/thermal-check.timer"
 }
 
-@test "fan-control.sh: thermal-based PWM fan controller" {
-    [ -f "${FILES}/fan-control.sh" ]
-    grep -qF 'pwm1' "${FILES}/fan-control.sh"
-    grep -qF 'set_pwm' "${FILES}/fan-control.sh"
-}
-
-@test "fan-control.service + timer: present and wired" {
-    grep -qF 'ExecStart=/usr/sbin/fan-control.sh' "${FILES}/fan-control.service"
-    grep -qF 'OnUnitActiveSec=30s' "${FILES}/fan-control.timer"
+@test "fan control is kernel-owned (T-P30, OS-052/053): no userspace fan loop" {
+    [ ! -e "${FILES}/fan-control.sh" ]
+    [ ! -e "${FILES}/fan-control.service" ]
+    ! grep -q 'fan-control' "${BATS_TEST_DIRNAME}/../acadia-services.bb"
 }
 
 @test "rtc-sync.sh: reads RTC on boot, writes on shutdown" {
@@ -53,4 +48,35 @@ setup() {
 
 @test "80-acadia-watchdog.preset: enables watchdog.service" {
     grep -qF 'enable watchdog.service' "${FILES}/80-acadia-watchdog.preset"
+}
+
+# ── T-P30 (OS-055): rtc-sync behaviour with stubbed tools ─────────────────
+_rtc_stub() {
+    STUB="${BATS_TEST_TMPDIR}/bin"; mkdir -p "${STUB}"
+    printf '#!/bin/sh\necho "$@" >> %s/hwclock.log\n' "${BATS_TEST_TMPDIR}" > "${STUB}/hwclock"
+    printf '#!/bin/sh\necho "%s"\n' "$1" > "${STUB}/timedatectl"
+    printf '#!/bin/sh\nexit 0\n' > "${STUB}/logger"
+    chmod +x "${STUB}"/*
+    touch "${BATS_TEST_TMPDIR}/rtc0"
+}
+
+@test "rtc-sync read: loads the RTC when the clock is not synchronised" {
+    _rtc_stub no
+    PATH="${STUB}:${PATH}" RTC_DEV="${BATS_TEST_TMPDIR}/rtc0" sh "${FILES}/rtc-sync.sh" read
+    grep -q -- '-s -f' "${BATS_TEST_TMPDIR}/hwclock.log"
+}
+
+@test "rtc-sync read: leaves a synchronised clock alone" {
+    _rtc_stub yes
+    PATH="${STUB}:${PATH}" RTC_DEV="${BATS_TEST_TMPDIR}/rtc0" sh "${FILES}/rtc-sync.sh" read
+    [ ! -e "${BATS_TEST_TMPDIR}/hwclock.log" ]
+}
+
+@test "rtc-sync write: only a synchronised clock is saved to the RTC" {
+    _rtc_stub no
+    PATH="${STUB}:${PATH}" RTC_DEV="${BATS_TEST_TMPDIR}/rtc0" sh "${FILES}/rtc-sync.sh" write
+    [ ! -e "${BATS_TEST_TMPDIR}/hwclock.log" ]
+    _rtc_stub yes
+    PATH="${STUB}:${PATH}" RTC_DEV="${BATS_TEST_TMPDIR}/rtc0" sh "${FILES}/rtc-sync.sh" write
+    grep -q -- '-w -f' "${BATS_TEST_TMPDIR}/hwclock.log"
 }

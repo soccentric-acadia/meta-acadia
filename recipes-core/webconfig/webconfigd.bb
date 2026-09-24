@@ -7,10 +7,11 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=3382002c026d2dcb5817068a8f184313"
 PV = "0.1.0+git${SRCPV}"
 # Follow the upstream repository's default branch.
 SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;branch=develop"
-# T-P26: SWUpdate install/confirm/rollback via the privileged helper
+# T-P20..T-P29: command kinds, rollouts, uploads, status, telemetry, LEDs,
+# camera, rsyslog forwarding (see Task/integration-production.md).
 # (full sha in the release manifest, P-O02). NOTE: keep comments on
 # their own line — BitBake cannot parse trailing '#' after an assignment.
-SRCREV = "a6aef7d37d104339353f65590912203046c879bd"
+SRCREV = "b9aa69c0694f00c8305075653f9538d6f182a49c"
 S = "${WORKDIR}/git"
 B = "${S}"
 
@@ -94,6 +95,10 @@ do_install:append() {
     install -d ${D}${sysconfdir}/default
     install -m 0644 ${S}/meta-webconfig/recipes-core/webconfig/files/webconfigd.env \
         ${D}${sysconfdir}/default/webconfigd
+    # T-P27: OTA bundle staging on the rootfs (/pst is too small).
+    install -d ${D}${nonarch_libdir}/tmpfiles.d
+    install -m 0644 ${S}/meta-webconfig/recipes-core/webconfig/files/webconfig-ota.tmpfiles.conf \
+        ${D}${nonarch_libdir}/tmpfiles.d/webconfig-ota.conf
 
     # OS-072: the rules.d directory must match polkit's own packaging
     # (0700 polkitd:root, polkit_124.bb) or RPM refuses the rootfs with a
@@ -126,7 +131,7 @@ RRECOMMENDS:${PN} = "systemd"
 # so the produced binary is already stripped — opt out of Yocto's QA re-strip check.
 INSANE_SKIP:${PN} = "already-stripped"
 
-FILES:${PN} = "${bindir}/webconfigd ${bindir}/webconfig-applyd /var/lib/webconfig ${systemd_system_unitdir}/webconfigd.service ${systemd_system_unitdir}/webconfig-applyd.service ${sysconfdir}/default/webconfigd ${datadir}/polkit-1/rules.d/50-webconfigd.rules /usr/local/bin/pico-flash"
+FILES:${PN} = "${bindir}/webconfigd ${bindir}/webconfig-applyd /var/lib/webconfig ${systemd_system_unitdir}/webconfigd.service ${systemd_system_unitdir}/webconfig-applyd.service ${sysconfdir}/default/webconfigd ${nonarch_libdir}/tmpfiles.d/webconfig-ota.conf ${datadir}/polkit-1/rules.d/50-webconfigd.rules /usr/local/bin/pico-flash"
 FILES:webconfig-static = "/usr/share/webconfig/static"
 FILES:webconfig-schemas = "/usr/share/webconfig/schemas"
 FILES:webconfig-manifest = "/usr/share/webconfig/board-manifest.json"
