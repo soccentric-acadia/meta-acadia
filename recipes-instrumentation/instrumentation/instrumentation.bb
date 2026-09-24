@@ -24,17 +24,19 @@ SRC_URI = "git://github.com/soccentric-acadia/Acadia-Instrumentation.git;protoco
 # T-P04: bumped to develop HEAD for the webconfigd.service.d/instr-socket.conf
 # drop-in (SB-4 socket access) — this rev also carries StreamDeviceData, which
 # closes the pinned-rev gap called out by SB-4/T-P05 for the telemetry path.
-INSTR_SRCREV ?= "957ea701b9ec60c0d4483f94523f7a2ca34fe443"
+INSTR_SRCREV ?= "fc03c02bfc730f7506492c616d2807a8c0c75445"
 SRCREV = "${INSTR_SRCREV}"
 S = "${WORKDIR}/git"
 
-inherit cmake pkgconfig systemd
+inherit cmake pkgconfig systemd useradd
 
 # Target libs. googletest deliberately absent: the test suite is gated on
 # BUILD_TESTING (set OFF below), so nothing in a Yocto build needs it. abseil-cpp
 # is listed explicitly (it is what the generated protobuf code links against) —
 # protobuf/grpc stage it transitively, but naming it fails loudly if that changes.
 DEPENDS = "grpc grpc-native protobuf protobuf-native abseil-cpp yaml-cpp openssl"
+# polkitd user for the rules.d chown (INS-009); target only.
+DEPENDS:append:class-target = " polkit"
 
 EXTRA_OECMAKE = "\
     -DCMAKE_BUILD_TYPE=Release \
@@ -100,6 +102,13 @@ do_install() {
     install -d ${D}${sysconfdir}/sysusers.d ${D}${nonarch_libdir}/tmpfiles.d
     install -m 0644 ${S}/system/sysusers.d/instrumentation.conf ${D}${sysconfdir}/sysusers.d/
     install -m 0644 ${S}/system/tmpfiles.d/instrumentation.conf ${D}${nonarch_libdir}/tmpfiles.d/
+    # INS-009: istate may start/stop/restart its instr-* spoke units. The
+    # rules.d dir must match polkit's own packaging (0700 polkitd:root) or
+    # RPM refuses the rootfs (see webconfigd.bb, OS-072).
+    install -m 0700 -d ${D}${datadir}/polkit-1/rules.d
+    chown polkitd:root ${D}${datadir}/polkit-1/rules.d
+    install -m 0644 ${S}/system/polkit/60-instrumentation.rules \
+        ${D}${datadir}/polkit-1/rules.d/60-instrumentation.rules
     install -d ${D}${sysconfdir}/udev/rules.d
     install -m 0644 ${S}/system/udev/70-instrumentation.rules ${D}${sysconfdir}/udev/rules.d/
 
@@ -132,8 +141,16 @@ do_install() {
                     ${D}${libdir}/cmake/instrumentation/
 }
 
+# polkitd is declared (identical to polkit_124.bb) so do_install can chown the
+# polkit rules.d directory to it.
+USERADD_PACKAGES:class-target = "${PN}"
+USERADD_PARAM:${PN} = "--system --no-create-home --user-group --home-dir ${sysconfdir}/polkit-1 --shell /bin/nologin polkitd"
+
 SYSTEMD_PACKAGES = "${PN}"
-SYSTEMD_SERVICE:${PN} = "instr-istate.service instr-networkd.service instr-monitord.service instr-hardware.service instr-faults.service instr-alarms.service instr-logmanager.service instr-telemetry.service instr-ota.service instr-backup.service instr-istate-watchdog.service"
+SYSTEMD_SERVICE:${PN} = "instr-istate.service instr-networkd.service instr-monitord.service instr-hardware.service instr-faults.service instr-alarms.service instr-logmanager.service instr-telemetry.service instr-backup.service instr-istate-watchdog.service"
+# T-P00c: instr-ota ships (istate relays can still address it) but is not
+# enabled — Acadia's OTA owner is SWUpdate via Acadia-Configuration, and the
+# istate default config lists `ota` in disabled_spokes.
 SYSTEMD_AUTO_ENABLE = "enable"
 
 # Acadia-OS ships instrumentation on exactly these machines (acadia-image.bb
@@ -146,4 +163,4 @@ INSTR_BOARD:raspberrypi4-64 = "rpi-4b"
 INSTR_BOARD:raspberrypi5 = "rpi-5"
 INSTR_BOARD:raspberrypi-cm5-io-board = "cm5"
 
-FILES:${PN} += "${sysusersdir} ${nonarch_libdir}/tmpfiles.d ${datadir}/instrumentation ${systemd_unitdir}/system/webconfigd.service.d/"
+FILES:${PN} += "${sysusersdir} ${nonarch_libdir}/tmpfiles.d ${datadir}/instrumentation ${systemd_unitdir}/system/webconfigd.service.d/ ${datadir}/polkit-1/rules.d/60-instrumentation.rules ${systemd_unitdir}/system/instr-ota.service"
