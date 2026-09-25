@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-25 — Task 014: Ship the on-device module registry (VB-3, OS-061)
+
+- **Parent task:** `soccentric-acadia/Acadia` `tasks/014-device-provisioning-verification/`.
+- **User-visible behaviour:** `acadia-client.service` no longer runs in
+  degraded empty-registry mode — `/etc/acadia/modules.yaml` is now installed
+  on-device, matching `Acadia-Client`'s compiled-in default path.
+- **Key files:** new `recipes-connectivity/acadia-module-registry/` recipe
+  (vendored from `Acadia-HAL@f6fb89e`); `recipes-core/images/acadia-image.bb`
+  installs it.
+
 ## 2026-09-25 — Task 013: Bump SRCREV_client to develop HEAD (VB-2)
 
 - **Parent task:** `soccentric-acadia/Acadia` `tasks/013-image-pin-refresh/`.
