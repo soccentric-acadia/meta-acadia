@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-25 — Task 013: Bump SRCREV_client to develop HEAD (VB-2)
+
+- **Parent task:** `soccentric-acadia/Acadia` `tasks/013-image-pin-refresh/`.
+- **Finding:** HAL pins (standalone recipe + Client's embedded copy) were
+  already at `Acadia-HAL`'s current develop HEAD (`f6fb89e`, per
+  `improvements.md` OS-034). Only `SRCREV_client` was stale, by one
+  `CHANGELOG.md`-only commit.
+- **Key files:** `recipes-connectivity/acadia-client/acadia-client_git.bb`
+  — `SRCREV_client` bumped `6bf0411` → `79433fe`.
+
 ## 2026-09-25 — Task 010: Client hardware-access privileges (VB-1)
 
 - **Parent task:** `soccentric-acadia/Acadia` `tasks/010-hal-hardware-access-privileges/`.
