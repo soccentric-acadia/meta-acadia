@@ -205,7 +205,9 @@ ACADIA_DEBUG_PACKAGES:append = "${@' openocd gdbserver perf trace-cmd valgrind' 
 # OS-028: acadia-client (the IV&V device agent) is now installed in the image
 # together with acadia-data-init (first-boot data provisioning) and a pinned
 # HAL sibling SRCREV so the client's develop adapters build reproducibly.
-IMAGE_INSTALL:append = " acadia-hal acadia-services acadia-device-identity acadia-boot-integrity acadia-client acadia-data-init"
+# OS-1x (VB-1): i2c/spi/gpio groups + udev rules so acadia-client.service
+# can reach those device classes via SupplementaryGroups=.
+IMAGE_INSTALL:append = " acadia-hal acadia-services acadia-device-identity acadia-boot-integrity acadia-client acadia-data-init acadia-udev-rules"
 IMAGE_INSTALL:append = "${ACADIA_DEBUG_PACKAGES}"
 
 # Target debugging and profiling (feature.txt §6). tools-debug pulls in
