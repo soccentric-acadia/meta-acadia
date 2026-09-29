@@ -27,7 +27,10 @@ SRC_URI = " \
 # (statement-use-after-free fixes, watchdog join, per-process test spools).
 # OS-072: 6bf0411 fixes the fmt formatting of std::atomic / toml::key that
 # broke the aarch64 cross-compile.
-SRCREV_client = "6bf04119c826a3c276f9323d2b1361bfd65bd017"
+# VB-2 (task 013): bumped to develop HEAD 79433fe — a CHANGELOG-only commit
+# over 6bf0411, no functional diff; bumped anyway to close the "behind
+# develop" gap exactly rather than by inspection only.
+SRCREV_client = "79433fe60a73007cb61a23c2a1d5574bb47346bc"
 #
 # The embedded HAL sibling pins the SAME Acadia-HAL revision as
 # acadia-hal_git.bb (T-P05: one HAL revision per build) — develop HEAD,

@@ -1,0 +1,43 @@
+# Changelog
+
+## 2026-09-25 — Task 014: Ship the on-device module registry (VB-3, OS-061)
+
+- **Parent task:** `soccentric-acadia/Acadia` `tasks/014-device-provisioning-verification/`.
+- **User-visible behaviour:** `acadia-client.service` no longer runs in
+  degraded empty-registry mode — `/etc/acadia/modules.yaml` is now installed
+  on-device, matching `Acadia-Client`'s compiled-in default path.
+- **Key files:** new `recipes-connectivity/acadia-module-registry/` recipe
+  (vendored from `Acadia-HAL@f6fb89e`); `recipes-core/images/acadia-image.bb`
+  installs it.
+
+## 2026-09-25 — Task 013: Bump SRCREV_client to develop HEAD (VB-2)
+
+- **Parent task:** `soccentric-acadia/Acadia` `tasks/013-image-pin-refresh/`.
+- **Finding:** HAL pins (standalone recipe + Client's embedded copy) were
+  already at `Acadia-HAL`'s current develop HEAD (`f6fb89e`, per
+  `improvements.md` OS-034). Only `SRCREV_client` was stale, by one
+  `CHANGELOG.md`-only commit.
+- **Key files:** `recipes-connectivity/acadia-client/acadia-client_git.bb`
+  — `SRCREV_client` bumped `6bf0411` → `79433fe`.
+
+## 2026-09-25 — Task 010: Client hardware-access privileges (VB-1)
+
+- **Parent task:** `soccentric-acadia/Acadia` `tasks/010-hal-hardware-access-privileges/`.
+- **User-visible behaviour:** `acadia-client.service` can now reach
+  `/dev/i2c-*`, `/dev/spidev*`, `/dev/gpiochip*`, `/dev/tty*` (UART/RS-485),
+  `/dev/video*`, raw CAN sockets, and the kernel log buffer — previously
+  every HAL test touching real hardware failed with `EACCES`/`EPERM`.
+- **Key files:**
+  - `recipes-connectivity/acadia-udev-rules/acadia-udev-rules.bb` (new) +
+    `files/61-acadia-hw-groups.rules` (new): creates the `i2c`/`spi`/`gpio`
+    groups and assigns the matching device nodes to them.
+  - `recipes-core/images/acadia-image.bb`: installs the new recipe.
+  - `recipes-connectivity/acadia-client/files/acadia-client.service`: adds
+    `SupplementaryGroups=` and `AmbientCapabilities=`/`CapabilityBoundingSet=`.
+- **Compatibility / rollout notes:** groups and udev rules are created at
+  image build / first boot, not retroactively via OTA; no already-deployed
+  device is known to exist. No existing hardening directive was weakened.
+- **Validation:** static review only (`systemd-analyze verify`, manual
+  recipe review); no Yocto build and no HIL hardware run were possible in
+  this session — see the parent task's `validation.md` for the full record
+  and known gaps.

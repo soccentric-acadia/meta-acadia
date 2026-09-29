@@ -1,0 +1,9 @@
+# VB-1 (Acadia integration-ivv.md): acadia-client.service reaches these
+# device classes via SupplementaryGroups=, not setuid/setcap. Without these
+# rules the i2c/spi/gpio groups exist but own nothing, so group membership
+# is a no-op. dialout/video/audio/disk are covered by systemd-udevd's own
+# default rules and base-passwd's stock groups; only i2c/spi/gpio need a
+# rule here.
+SUBSYSTEM=="i2c-dev", GROUP="i2c", MODE="0660"
+SUBSYSTEM=="spidev", GROUP="spi", MODE="0660"
+KERNEL=="gpiochip[0-9]*", SUBSYSTEM=="gpio", GROUP="gpio", MODE="0660"

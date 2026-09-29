@@ -24,6 +24,14 @@ NoNewPrivileges=yes
 ProtectSystem=full
 PrivateTmp=yes
 ReadWritePaths=/var/lib/acadia
+# VB-1: the embedded HAL needs to reach real hardware. Groups grant device-
+# node access (see acadia-udev-rules for i2c/spi/gpio; dialout/video/audio/
+# disk are stock groups); the ambient capabilities are the narrow set the
+# HAL's CAN and dmesg tests need — not the CAP_SYS_RAWIO-class "raw I/O"
+# capability recipes-bsp/acadia-hal/files/security.md forbids elsewhere.
+SupplementaryGroups=i2c spi gpio dialout video audio disk
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_SYSLOG
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_SYSLOG
 
 [Install]
 WantedBy=multi-user.target
