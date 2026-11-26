@@ -2,10 +2,11 @@
 # Clone the repo, run CMake, install the binaries and system files it ships.
 SUMMARY = "Acadia Instrumentation on-device management and observability suite"
 HOMEPAGE = "https://soccentric.example/instrumentation"
-LICENSE = "CLOSED"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 PV = "1.0.0+git${SRCPV}"
-SRC_URI = "git://github.com/soccentric-acadia/Acadia-Instrumentation.git;protocol=ssh;user=git;branch=develop"
+SRC_URI = "git://github.com/soccentric-acadia/Acadia-Instrumentation.git;protocol=https;branch=develop"
 # Pinned — not AUTOREV. Two builds of the same release must produce the same
 # bits; a floating branch is incompatible with an image that has an OTA/rollback
 # story. Bump deliberately when releasing.

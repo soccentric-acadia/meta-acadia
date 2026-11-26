@@ -2,7 +2,8 @@ SUMMARY = "Acadia Client daemon — gRPC client for the Acadia IV&V server"
 DESCRIPTION = "C++ daemon that connects to an external Acadia server via gRPC, \
                runs hardware validation tests using Acadia-HAL, and reports results."
 HOMEPAGE = "https://github.com/soccentric-acadia/Acadia-Client"
-LICENSE = "CLOSED"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 # Follow the upstream repository's develop branch (same policy as webconfigd).
 # develop carries the Yocto-ready CMake logic: it prefers an installed
@@ -16,8 +17,8 @@ LICENSE = "CLOSED"
 # 'git://git@github.com/...;user=git' also worked but displayed a misleading
 # fetch URL; the explicit ;user=git parameter is the clean spelling (issue #35).
 SRC_URI = " \
-    git://github.com/soccentric-acadia/Acadia-Client.git;protocol=ssh;user=git;branch=develop;name=client;destsuffix=git \
-    git://github.com/soccentric-acadia/Acadia-HAL.git;protocol=ssh;user=git;branch=develop;name=hal;destsuffix=Acadia-HAL \
+    git://github.com/soccentric-acadia/Acadia-Client.git;protocol=https;branch=develop;name=client;destsuffix=git \
+    git://github.com/soccentric-acadia/Acadia-HAL.git;protocol=https;branch=develop;name=hal;destsuffix=Acadia-HAL \
     file://acadia-client.service \
 "
 

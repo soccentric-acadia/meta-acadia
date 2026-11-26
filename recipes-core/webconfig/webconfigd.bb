@@ -1,12 +1,12 @@
 SUMMARY = "SoCcentric on-device WebConfig daemon and UI"
 DESCRIPTION = "Fetches, builds, and installs the WebConfig daemon, frontend, schemas, and Acadia board manifest."
 HOMEPAGE = "https://github.com/soccentric-acadia/Acadia-Configuration"
-LICENSE = "CLOSED"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=3382002c026d2dcb5817068a8f184313"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 PV = "0.1.0+git${SRCPV}"
 # Follow the upstream repository's default branch.
-SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=ssh;user=git;branch=develop"
+SRC_URI = "git://github.com/soccentric-acadia/Acadia-Configuration.git;protocol=https;branch=develop"
 # T-P20..T-P29: command kinds, rollouts, uploads, status, telemetry, LEDs,
 # camera, rsyslog forwarding (see Task/integration-production.md).
 # (full sha in the release manifest, P-O02). NOTE: keep comments on

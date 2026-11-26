@@ -39,7 +39,7 @@ the current recipe**.
 
 ## CVE surface
 
-Even though `acadia-hal` is `LICENSE = "CLOSED"`, the runtime
+Even though `acadia-hal` is `LICENSE = "MIT"`, the runtime
 libraries it links against (`libgrpc++`, `abseil-cpp`, `libprotobuf`)
 have published CVEs. The recipe inherits `cve-check.bbclass`
 implicitly via `cmake`; the `cve-check` pass scans each dependency

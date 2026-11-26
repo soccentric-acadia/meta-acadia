@@ -1,16 +1,16 @@
 SUMMARY = "Acadia Hardware Abstraction Layer"
 DESCRIPTION = "HAL library for the Acadia platform, providing hardware abstraction interfaces."
 HOMEPAGE = "https://github.com/soccentric-acadia/Acadia-HAL"
-LICENSE = "CLOSED"
-# Upstream is a private repo; no LICENSE file is shipped.  BitBake
+LICENSE = "MIT"
+# Upstream is MIT-licensed; BitBake uses the common MIT license text.  BitBake
 # requires a LIC_FILES_CHKSUM entry (issue #34).  We point at the
 # recipe file itself, which is always present, and use a literal
 # md5.  The reviewed security.md policy is used as the stable local
 # checksum source until upstream publishes a real LICENSE file.
-LIC_FILES_CHKSUM = "file://security.md;md5=1606e3c70e7eb33ddfd7fa686c3b5ff0"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 SRC_URI = " \
-    git://github.com/soccentric-acadia/Acadia-HAL.git;protocol=ssh;user=git;branch=develop \
+    git://github.com/soccentric-acadia/Acadia-HAL.git;protocol=https;branch=develop \
     file://security.md \
 "
 # Pin the private upstream to avoid AUTOREV parse-time network lookups.
