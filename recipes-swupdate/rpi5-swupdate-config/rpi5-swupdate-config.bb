@@ -16,6 +16,7 @@ SRC_URI = " \
     file://boot-watchdog.sh \
     file://boot-watchdog.service \
     file://swupdate-start.sh \
+    file://swupdate-webui.conf \
     file://bootcount-reset.sh \
     file://bootcount-reset.service \
     file://fw_env.config \
